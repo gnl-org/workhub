@@ -1,0 +1,4 @@
+# Spring Boot
+/backend/target/
+# Ignore Spring Boot properties with credentials
+application.properties
