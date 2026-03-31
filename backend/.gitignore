@@ -1,4 +1,20 @@
-# Spring Boot
-/backend/target/
-# Ignore Spring Boot properties with credentials
-application.properties
+# Maven
+/target/
+
+# IntelliJ
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Application config (REAL secrets)
+src/main/resources/application.properties
+src/main/resources/application.yml
