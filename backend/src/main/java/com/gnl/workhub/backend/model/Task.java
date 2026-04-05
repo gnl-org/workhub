@@ -2,35 +2,39 @@ package com.gnl.workhub.backend.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users")
+@Table(name = "task")
 @Data
-public class User {
+public class Task {
     @Id
     @GeneratedValue
     private UUID id;
 
-    @Column(unique = true)
-    private String email;
+    @ManyToOne
+    @JoinColumn(name = "project_id")
+    private Project project;
 
-    private String passwordHash;
-    private String fullName;
+    @ManyToOne
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
+
+    private String title;
 
     @Enumerated(EnumType.STRING)
-    private UserRole globalRole;
+    private TaskStatus status;
 
-    private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    private TaskPriority priority;
+
+    private LocalDateTime dueDate;
     private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }
 

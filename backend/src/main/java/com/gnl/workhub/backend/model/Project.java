@@ -3,6 +3,7 @@ package com.gnl.workhub.backend.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -13,9 +14,29 @@ public class Project {
     @GeneratedValue
     private UUID id;
 
-    private String name;
+    private String title;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
+
+    @Enumerated(EnumType.STRING)
+    private ProjectStatus status;
+
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 }
