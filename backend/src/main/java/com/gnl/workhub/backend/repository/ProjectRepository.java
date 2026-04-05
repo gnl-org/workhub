@@ -1,6 +1,6 @@
 package com.gnl.workhub.backend.repository;
 
-import com.gnl.workhub.backend.model.Project;
+import com.gnl.workhub.backend.entity.Project;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

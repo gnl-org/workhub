@@ -1,4 +1,4 @@
-package com.gnl.workhub.backend.model;
+package com.gnl.workhub.backend.entity;
 
 public enum ProjectRole {
     OWNER, ADMIN, MEMBER, VIEWER

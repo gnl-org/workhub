@@ -1,9 +1,8 @@
 package com.gnl.workhub.backend.controller;
 
-import com.gnl.workhub.backend.model.Project;
+import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.service.ProjectService;
 import lombok.Data;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

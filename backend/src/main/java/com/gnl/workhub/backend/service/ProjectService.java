@@ -1,6 +1,6 @@
 package com.gnl.workhub.backend.service;
 
-import com.gnl.workhub.backend.model.Project;
+import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.repository.ProjectRepository;
 import lombok.Data;
 import org.springframework.stereotype.Service;

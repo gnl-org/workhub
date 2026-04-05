@@ -1,4 +1,4 @@
-package com.gnl.workhub.backend.model;
+package com.gnl.workhub.backend.entity;
 
 public enum TaskPriority {
     LOW, MEDIUM, HIGH, CRITICAL
