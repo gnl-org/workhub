@@ -11,6 +11,7 @@ import java.util.UUID;
 public class TaskResponse {
     private UUID id;
     private String title;
+    private String description;
     private String projectTitle; // Useful for breadcrumbs in UI
     private String assigneeName; // "John Doe" instead of a nested User object
     private TaskStatus status;

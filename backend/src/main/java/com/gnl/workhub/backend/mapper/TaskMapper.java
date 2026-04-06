@@ -14,6 +14,7 @@ public class TaskMapper {
     public Task toEntity(TaskRequest request, Project project, User assignee) {
         Task task = new Task();
         task.setTitle(request.getTitle());
+        task.setDescription(request.getDescription());
         task.setProject(project);
         task.setAssignedTo(assignee);
         task.setStatus(request.getStatus());
@@ -27,9 +28,11 @@ public class TaskMapper {
         TaskResponse response = new TaskResponse();
         response.setId(task.getId());
         response.setTitle(task.getTitle());
+        response.setDescription(task.getDescription());
         response.setStatus(task.getStatus());
         response.setPriority(task.getPriority());
         response.setDueDate(task.getDueDate());
+        response.setCreatedAt(task.getCreatedAt());
 
         // Handle Project info
         if (task.getProject() != null) {

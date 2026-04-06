@@ -31,9 +31,11 @@ erDiagram
         uuid project_id FK
         uuid assigned_to FK
         string title
+        text description
         string status
         string priority
         timestamp due_date
+        timestamp created_at
         timestamp updated_at
     }
 

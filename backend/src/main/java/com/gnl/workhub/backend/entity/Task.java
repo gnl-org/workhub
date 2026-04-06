@@ -27,6 +27,9 @@ public class Task {
 
     private String title;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
 

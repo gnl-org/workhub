@@ -10,6 +10,7 @@ import java.util.UUID;
 @Data
 public class TaskRequest {
     private String title;
+    private String description;
     private UUID projectId;    // Reference by ID
     private UUID assignedToId; // Reference by ID (can be null)
     private TaskStatus status;
