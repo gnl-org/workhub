@@ -1,5 +1,6 @@
 package com.gnl.workhub.backend.entity;
 
+import com.gnl.workhub.backend.enums.ProjectRole;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;

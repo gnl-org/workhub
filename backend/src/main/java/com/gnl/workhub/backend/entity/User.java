@@ -1,29 +1,45 @@
 package com.gnl.workhub.backend.entity;
 
+import com.gnl.workhub.backend.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
-@Data
+@Getter @Setter
+@NoArgsConstructor
 public class User {
+
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String email;
 
+    @Column(name = "password_hash", nullable = false)
     private String passwordHash;
+
+    @Column(name = "full_name")
     private String fullName;
 
     @Enumerated(EnumType.STRING)
-    private UserRole globalRole;
+    @Column(name = "global_role", nullable = false)
+    private UserRole globalRole = UserRole.USER; // Default value
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false; // The "Soft Delete" flag
+
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist

@@ -1,5 +1,6 @@
 package com.gnl.workhub.backend.entity;
 
+import com.gnl.workhub.backend.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -7,7 +8,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "project")
+@Table(name = "projects")
 @Data
 public class Project {
     @Id
@@ -19,14 +20,17 @@ public class Project {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @PrePersist
