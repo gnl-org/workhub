@@ -6,19 +6,12 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class ProjectMemberId implements Serializable {
-    private UUID project;
-    private UUID user;
-}
+import java.util.UUID;
 
 @Entity
 @Table(name = "project_members")
 @Data
-@IdClass(ProjectMemberId.class)
+@IdClass(ProjectMember.ProjectMemberId.class)
 public class ProjectMember {
     @Id
     @ManyToOne
@@ -41,4 +34,13 @@ public class ProjectMember {
     protected void onCreate() {
         joinedAt = LocalDateTime.now();
     }
+
+    @Getter @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProjectMemberId implements Serializable {
+        private UUID project;
+        private UUID user;
+    }
+
 }

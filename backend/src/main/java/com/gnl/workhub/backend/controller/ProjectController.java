@@ -1,5 +1,7 @@
 package com.gnl.workhub.backend.controller;
 
+import com.gnl.workhub.backend.dto.ProjectRequest;
+import com.gnl.workhub.backend.dto.ProjectResponse;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.service.ProjectService;
 import lombok.Data;
@@ -25,7 +27,7 @@ public class ProjectController {
     }
 
     @PostMapping
-    public  Project createProject(@RequestBody  Project project) {
-        return projectService.createProject(project);
+    public ProjectResponse createProject(@RequestBody ProjectRequest request) {
+        return projectService.createProject(request);
     }
 }
