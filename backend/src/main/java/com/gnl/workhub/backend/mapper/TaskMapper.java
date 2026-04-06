@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.mapper;
 
 import com.gnl.workhub.backend.dto.TaskRequest;
 import com.gnl.workhub.backend.dto.TaskResponse;
+import com.gnl.workhub.backend.dto.UpdateTaskRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.Task;
 import com.gnl.workhub.backend.entity.User;
@@ -21,6 +22,27 @@ public class TaskMapper {
         task.setPriority(request.getPriority());
         task.setDueDate(request.getDueDate());
         return task;
+    }
+
+    // Partial update - Map UpdateRequest -> Entity (only update non-null fields)
+    public void updateEntityFromRequest(UpdateTaskRequest request, Task task, User assignee) {
+        if (request.getTitle() != null) {
+            task.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            task.setDescription(request.getDescription());
+        }
+        if (request.getStatus() != null) {
+            task.setStatus(request.getStatus());
+        }
+        if (request.getPriority() != null) {
+            task.setPriority(request.getPriority());
+        }
+        if (request.getDueDate() != null) {
+            task.setDueDate(request.getDueDate());
+        }
+        // For assignedTo, we allow it to be set to null (unassign)
+        task.setAssignedTo(assignee);
     }
 
     // Map Entity -> Response

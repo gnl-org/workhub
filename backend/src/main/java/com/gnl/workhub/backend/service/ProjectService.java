@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.dto.ProjectRequest;
 import com.gnl.workhub.backend.dto.ProjectResponse;
+import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -49,5 +51,48 @@ public class ProjectService {
 
         // 4. Return formatted data
         return projectMapper.toResponse(savedProject);
+    }
+
+    public List<ProjectResponse> getProjectsByOwnerId(UUID ownerId) {
+        // Verify user exists
+        userRepository.findById(ownerId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + ownerId));
+
+        List<Project> projects = projectRepository.findByOwnerId(ownerId);
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProjectResponse> getProjectsByUserMembership(UUID userId) {
+        // Verify user exists
+        userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        // Get all projects where user is a member
+        List<ProjectMember> memberships = projectMemberRepository.findByUserId(userId);
+        return memberships.stream()
+                .map(ProjectMember::getProject)
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ProjectResponse updateProject(UUID projectId, UpdateProjectRequest request) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+
+        // Update only non-null fields
+        projectMapper.updateEntityFromRequest(request, project);
+
+        Project updatedProject = projectRepository.save(project);
+        return projectMapper.toResponse(updatedProject);
+    }
+
+    @Transactional
+    public void deleteProject(UUID projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+        projectRepository.delete(project);
     }
 }

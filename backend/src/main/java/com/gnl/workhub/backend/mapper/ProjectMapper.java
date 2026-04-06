@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.mapper;
 
 import com.gnl.workhub.backend.dto.ProjectRequest;
 import com.gnl.workhub.backend.dto.ProjectResponse;
+import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.User;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,19 @@ public class ProjectMapper {
         project.setOwner(owner);
         // Status is usually handled by @PrePersist or default value in Entity
         return project;
+    }
+
+    // Partial update - Map UpdateRequest -> Entity (only update non-null fields)
+    public void updateEntityFromRequest(UpdateProjectRequest request, Project project) {
+        if (request.getTitle() != null) {
+            project.setTitle(request.getTitle());
+        }
+        if (request.getDescription() != null) {
+            project.setDescription(request.getDescription());
+        }
+        if (request.getStatus() != null) {
+            project.setStatus(request.getStatus());
+        }
     }
 
     // Map Entity -> Response
