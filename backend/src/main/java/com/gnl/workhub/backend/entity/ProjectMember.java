@@ -2,23 +2,21 @@ package com.gnl.workhub.backend.entity;
 
 import com.gnl.workhub.backend.enums.ProjectRole;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Data
+@Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-class ProjectMemberId implements Serializable {
-    private Project project;
-    private User user;
+public class ProjectMemberId implements Serializable {
+    private UUID project;
+    private UUID user;
 }
 
 @Entity
-@Table(name = "project_member")
+@Table(name = "project_members")
 @Data
 @IdClass(ProjectMemberId.class)
 public class ProjectMember {
@@ -33,8 +31,10 @@ public class ProjectMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "project_role")
     private ProjectRole projectRole;
 
+    @Column(name = "joined_at")
     private LocalDateTime joinedAt;
 
     @PrePersist

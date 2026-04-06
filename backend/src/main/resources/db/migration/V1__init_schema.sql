@@ -26,7 +26,7 @@ CREATE TABLE projects (
 );
 
 -- 3. Project Members (Junction Table)
-CREATE TABLE project_member (
+CREATE TABLE project_members (
     project_id UUID NOT NULL,
     user_id UUID NOT NULL,
     project_role VARCHAR(20) DEFAULT 'MEMBER',
@@ -55,4 +55,4 @@ CREATE TABLE tasks (
 -- Indices for performance
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_tasks_project_id ON tasks(project_id);
-CREATE INDEX idx_project_members_user_id ON project_member(user_id);
+CREATE INDEX idx_project_members_user_id ON project_members(user_id);

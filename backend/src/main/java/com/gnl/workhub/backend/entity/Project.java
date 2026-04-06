@@ -2,14 +2,15 @@ package com.gnl.workhub.backend.entity;
 
 import com.gnl.workhub.backend.enums.ProjectStatus;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Table(name = "projects")
-@Data
+@Getter @Setter
 public class Project {
     @Id
     @GeneratedValue
