@@ -6,6 +6,7 @@ import com.gnl.workhub.backend.dto.UpdateTaskRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.Task;
 import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.TaskMapper;
 import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.TaskRepository;
@@ -31,13 +32,13 @@ public class TaskService {
     public TaskResponse createTask(TaskRequest request) {
         // 1. Validate Project (Mandatory)
         Project project = projectRepository.findById(request.getProjectId())
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + request.getProjectId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + request.getProjectId()));
 
         // 2. Validate Assignee (Optional)
         User assignee = null;
         if (request.getAssignedToId() != null) {
             assignee = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getAssignedToId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getAssignedToId()));
         }
 
         // 3. Map DTO to Entity
@@ -53,7 +54,7 @@ public class TaskService {
     public List<TaskResponse> getTasksByProjectId(UUID projectId) {
         // Verify project exists
         projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
 
         List<Task> tasks = taskRepository.findByProjectId(projectId);
         return tasks.stream()
@@ -64,9 +65,9 @@ public class TaskService {
     public List<TaskResponse> getTasksByProjectIdAndUserId(UUID projectId, UUID userId) {
         // Verify project and user exist
         projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         List<Task> tasks = taskRepository.findByProjectIdAndAssignedToId(projectId, userId);
         return tasks.stream()
@@ -77,13 +78,13 @@ public class TaskService {
     @Transactional
     public TaskResponse updateTask(UUID taskId, UpdateTaskRequest request) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with ID: " + taskId));
 
         // Validate and fetch assignee if provided
         User assignee = null;
         if (request.getAssignedToId() != null) {
             assignee = userRepository.findById(request.getAssignedToId())
-                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getAssignedToId()));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getAssignedToId()));
         }
 
         // Update only non-null fields
@@ -96,13 +97,13 @@ public class TaskService {
     @Transactional
     public void deleteTask(UUID taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with ID: " + taskId));
         taskRepository.delete(task);
     }
 
     public TaskResponse getTaskById(UUID taskId) {
         Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new RuntimeException("Task not found with ID: " + taskId));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found with ID: " + taskId));
         return taskMapper.toResponse(task);
     }
 }

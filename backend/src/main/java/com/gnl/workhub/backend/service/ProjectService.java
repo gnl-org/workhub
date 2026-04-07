@@ -8,6 +8,7 @@ import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
 import com.gnl.workhub.backend.enums.ProjectRole;
 import com.gnl.workhub.backend.enums.ProjectStatus;
+import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.ProjectMapper;
 import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
@@ -35,13 +36,13 @@ public class ProjectService {
 
     public Project getProjectById(UUID id) {
         return projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Project not found")); // TODO: throw custom exception to handle globally
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found" + id));
     }
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         User owner = userRepository.findById(request.getOwnerId())
-                .orElseThrow(() -> new RuntimeException("Owner not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
 
         // 2. Conversion
         Project project = projectMapper.toEntity(request, owner);
@@ -56,7 +57,7 @@ public class ProjectService {
     public List<ProjectResponse> getProjectsByOwnerId(UUID ownerId) {
         // Verify user exists
         userRepository.findById(ownerId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + ownerId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + ownerId));
 
         List<Project> projects = projectRepository.findByOwnerId(ownerId);
         return projects.stream()
@@ -67,7 +68,7 @@ public class ProjectService {
     public List<ProjectResponse> getProjectsByUserMembership(UUID userId) {
         // Verify user exists
         userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
 
         // Get all projects where user is a member
         List<ProjectMember> memberships = projectMemberRepository.findByUserId(userId);
@@ -80,7 +81,7 @@ public class ProjectService {
     @Transactional
     public ProjectResponse updateProject(UUID projectId, UpdateProjectRequest request) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
 
         // Update only non-null fields
         projectMapper.updateEntityFromRequest(request, project);
@@ -92,7 +93,7 @@ public class ProjectService {
     @Transactional
     public void deleteProject(UUID projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
         projectRepository.delete(project);
     }
 }
