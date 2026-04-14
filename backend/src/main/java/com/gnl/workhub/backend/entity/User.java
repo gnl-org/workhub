@@ -2,9 +2,7 @@ package com.gnl.workhub.backend.entity;
 
 import com.gnl.workhub.backend.enums.UserRole;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -17,8 +15,10 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "users")
+@Builder
 @Getter @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class User implements UserDetails {
 
     @Id
