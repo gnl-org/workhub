@@ -6,16 +6,15 @@ import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
-import com.gnl.workhub.backend.enums.ProjectRole;
-import com.gnl.workhub.backend.enums.ProjectStatus;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.ProjectMapper;
 import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -30,19 +29,28 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
 
-    public List<Project> getAllProjects() {
-        return projectRepository.findAll();
+    public List<ProjectResponse> getAllProjects() {
+        List<Project> projects = projectRepository.findAll();
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
-    public Project getProjectById(UUID id) {
-        return projectRepository.findById(id)
+    public ProjectResponse getProjectById(UUID id) {
+        Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found" + id));
+
+        return projectMapper.toResponse(project);
     }
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
-        User owner = userRepository.findById(request.getOwnerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Owner not found"));
+        // 1. Get the email of the logged-in user from the JWT
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 2. Find the user entity
+        User owner = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         // 2. Conversion
         Project project = projectMapper.toEntity(request, owner);
@@ -60,6 +68,17 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + ownerId));
 
         List<Project> projects = projectRepository.findByOwnerId(ownerId);
+        return projects.stream()
+                .map(projectMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<ProjectResponse> getMyProjects() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+
+        List<Project> projects = projectRepository.findByOwnerId(currentUser.getId());
         return projects.stream()
                 .map(projectMapper::toResponse)
                 .collect(Collectors.toList());

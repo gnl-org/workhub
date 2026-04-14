@@ -3,7 +3,6 @@ package com.gnl.workhub.backend.controller;
 import com.gnl.workhub.backend.dto.ProjectRequest;
 import com.gnl.workhub.backend.dto.ProjectResponse;
 import com.gnl.workhub.backend.dto.UpdateProjectRequest;
-import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,18 +17,23 @@ public class ProjectController {
     private final ProjectService projectService;
 
     @GetMapping
-    public List<Project> getProjects() {
+    public List<ProjectResponse> getProjects() {
         return projectService.getAllProjects();
     }
 
     @GetMapping("/{id}")
-    public Project getProjectById(@PathVariable UUID id) {
+    public ProjectResponse getProjectById(@PathVariable UUID id) {
         return projectService.getProjectById(id);
     }
 
     @PostMapping
     public ProjectResponse createProject(@RequestBody ProjectRequest request) {
         return projectService.createProject(request);
+    }
+
+    @GetMapping("/own")
+    public List<ProjectResponse> getMyProjects() {
+        return projectService.getMyProjects();
     }
 
     @GetMapping("/user/{userId}/owned")

@@ -7,5 +7,4 @@ import java.util.UUID;
 public class ProjectRequest {
     private String title;
     private String description;
-    private UUID ownerId;
 }
