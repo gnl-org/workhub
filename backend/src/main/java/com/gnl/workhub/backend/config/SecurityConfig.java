@@ -27,9 +27,16 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**").permitAll() // Open the door for Login/Register
+                        // 1. Public endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/health").permitAll()
-                        .anyRequest().authenticated() // Lock everything else
+
+                        // 2. Role-based endpoints (Locked to ADMIN)
+                        // Note: .hasRole("ADMIN") automatically checks for "ROLE_ADMIN"
+                        .requestMatchers("/api/v1/management/**").hasRole("ADMIN")
+
+                        // Lock everything else
+                        .anyRequest().authenticated()
                 );
 
         return http.build();
