@@ -72,7 +72,6 @@ class ProjectServiceTest {
         projectRequest = new ProjectRequest();
         projectRequest.setTitle("Test Project");
         projectRequest.setDescription("Test Description");
-        projectRequest.setOwnerId(userId);
 
         projectResponse = new ProjectResponse();
         projectResponse.setId(projectId);
@@ -89,7 +88,7 @@ class ProjectServiceTest {
         when(projectRepository.findAll()).thenReturn(projects);
 
         // Act
-        List<Project> result = projectService.getAllProjects();
+        List<ProjectResponse> result = projectService.getAllProjects();
 
         // Assert
         assertNotNull(result);
@@ -103,7 +102,7 @@ class ProjectServiceTest {
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(testProject));
 
         // Act
-        Project result = projectService.getProjectById(projectId);
+        ProjectResponse result = projectService.getProjectById(projectId);
 
         // Assert
         assertNotNull(result);

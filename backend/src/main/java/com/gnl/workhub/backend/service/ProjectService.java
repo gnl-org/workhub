@@ -6,6 +6,7 @@ import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.ProjectMapper;
 import com.gnl.workhub.backend.repository.ProjectMemberRepository;
@@ -13,6 +14,8 @@ import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -29,90 +32,84 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
 
-    public List<ProjectResponse> getAllProjects() {
-        List<Project> projects = projectRepository.findAll();
+    // --- HELPER METHODS ---
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    }
+
+    private List<ProjectResponse> toResponseList(List<Project> projects) {
         return projects.stream()
                 .map(projectMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList(); // Cleaner Java 16+ syntax
+    }
+
+    // --- SERVICE METHODS ---
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<ProjectResponse> getAllProjects() {
+        return toResponseList(projectRepository.findAll());
     }
 
     public ProjectResponse getProjectById(UUID id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found" + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + id));
 
+        validateProjectAccess(project, getCurrentUser());
         return projectMapper.toResponse(project);
     }
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
-        // 1. Get the email of the logged-in user from the JWT
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        // 2. Find the user entity
-        User owner = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        // 2. Conversion
-        Project project = projectMapper.toEntity(request, owner);
-
-        // 3. Persistence
-        Project savedProject = projectRepository.save(project);
-
-        // 4. Return formatted data
-        return projectMapper.toResponse(savedProject);
-    }
-
-    public List<ProjectResponse> getProjectsByOwnerId(UUID ownerId) {
-        // Verify user exists
-        userRepository.findById(ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + ownerId));
-
-        List<Project> projects = projectRepository.findByOwnerId(ownerId);
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .collect(Collectors.toList());
+        Project project = projectMapper.toEntity(request, getCurrentUser());
+        return projectMapper.toResponse(projectRepository.save(project));
     }
 
     public List<ProjectResponse> getMyProjects() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-        List<Project> projects = projectRepository.findByOwnerId(currentUser.getId());
-        return projects.stream()
-                .map(projectMapper::toResponse)
-                .collect(Collectors.toList());
-    }
-
-    public List<ProjectResponse> getProjectsByUserMembership(UUID userId) {
-        // Verify user exists
-        userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-
-        // Get all projects where user is a member
-        List<ProjectMember> memberships = projectMemberRepository.findByUserId(userId);
-        return memberships.stream()
-                .map(ProjectMember::getProject)
-                .map(projectMapper::toResponse)
-                .collect(Collectors.toList());
+        return toResponseList(projectRepository.findByOwnerId(getCurrentUser().getId()));
     }
 
     @Transactional
     public ProjectResponse updateProject(UUID projectId, UpdateProjectRequest request) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
 
-        // Update only non-null fields
+        validateProjectAccess(project, getCurrentUser());
+
         projectMapper.updateEntityFromRequest(request, project);
-
-        Project updatedProject = projectRepository.save(project);
-        return projectMapper.toResponse(updatedProject);
+        return projectMapper.toResponse(projectRepository.save(project));
     }
 
     @Transactional
     public void deleteProject(UUID projectId) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+
+        User user = getCurrentUser();
+        if (!project.getOwner().getId().equals(user.getId()) && user.getGlobalRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("Only the owner can delete this project");
+        }
+
         projectRepository.delete(project);
+    }
+
+    private void validateProjectAccess(Project project, User user) {
+        // 1. Check if Admin
+        boolean isAdmin = user.getGlobalRole().equals(UserRole.ADMIN);
+        if (isAdmin) return; // Admins get a pass
+
+        // 2. Check if Owner
+        boolean isOwner = project.getOwner().getId().equals(user.getId());
+        if (isOwner) return;
+
+        // 3. Check if Member
+        boolean isMember = projectMemberRepository.existsById(
+                new ProjectMember.ProjectMemberId(project.getId(), user.getId())
+        );
+
+        if (!isMember) {
+            throw new AccessDeniedException("Access Denied: You are not a member of this project.");
+        }
     }
 }

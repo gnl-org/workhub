@@ -36,16 +36,6 @@ public class ProjectController {
         return projectService.getMyProjects();
     }
 
-    @GetMapping("/user/{userId}/owned")
-    public List<ProjectResponse> getProjectsByOwner(@PathVariable UUID userId) {
-        return projectService.getProjectsByOwnerId(userId);
-    }
-
-    @GetMapping("/user/{userId}/member")
-    public List<ProjectResponse> getProjectsByUserMembership(@PathVariable UUID userId) {
-        return projectService.getProjectsByUserMembership(userId);
-    }
-
     @PatchMapping("/{projectId}")
     public ProjectResponse updateProject(
             @PathVariable UUID projectId,
