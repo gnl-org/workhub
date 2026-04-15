@@ -12,41 +12,29 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/tasks")
 public class TaskController {
     private final TaskService taskService;
 
-    @PostMapping
-    public TaskResponse createTask(@RequestBody TaskRequest request) {
-        return taskService.createTask(request);
+    @PostMapping("/project/{projectId}/tasks")
+    public TaskResponse createTask(@PathVariable UUID projectId, @RequestBody TaskRequest request) {
+        return taskService.createTask(projectId, request);
     }
 
-    @GetMapping("/project/{projectId}")
-    public List<TaskResponse> getTasksByProject(@PathVariable UUID projectId) {
-        return taskService.getTasksByProjectId(projectId);
+    @GetMapping("/project/{projectId}/tasks/{taskId}")
+    public TaskResponse getTaskById(@PathVariable UUID projectId, @PathVariable UUID taskId) {
+        return taskService.getTaskById(projectId, taskId);
     }
 
-    @GetMapping("/project/{projectId}/user/{userId}")
-    public List<TaskResponse> getTasksByProjectAndUser(
-            @PathVariable UUID projectId,
-            @PathVariable UUID userId) {
-        return taskService.getTasksByProjectIdAndUserId(projectId, userId);
-    }
-
-    @GetMapping("/{taskId}")
-    public TaskResponse getTaskById(@PathVariable UUID taskId) {
-        return taskService.getTaskById(taskId);
-    }
-
-    @PatchMapping("/{taskId}")
+    @PatchMapping("/project/{projectId}/tasks/{taskId}")
     public TaskResponse updateTask(
+            @PathVariable UUID projectId,
             @PathVariable UUID taskId,
             @RequestBody UpdateTaskRequest request) {
-        return taskService.updateTask(taskId, request);
+        return taskService.updateTask(projectId, taskId, request);
     }
 
-    @DeleteMapping("/{taskId}")
-    public void deleteTask(@PathVariable UUID taskId) {
-        taskService.deleteTask(taskId);
+    @DeleteMapping("/project/{projectId}/tasks/{taskId}")
+    public void deleteTask(@PathVariable UUID projectId, @PathVariable UUID taskId) {
+        taskService.deleteTask(projectId, taskId);
     }
 }

@@ -18,4 +18,6 @@ public class TaskResponse {
     private TaskPriority priority;
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    // private String createdBy; TODO: add created by user name
 }

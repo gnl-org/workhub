@@ -55,6 +55,7 @@ public class TaskMapper {
         response.setPriority(task.getPriority());
         response.setDueDate(task.getDueDate());
         response.setCreatedAt(task.getCreatedAt());
+        response.setUpdatedAt(task.getUpdatedAt());
 
         // Handle Project info
         if (task.getProject() != null) {
