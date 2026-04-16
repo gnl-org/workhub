@@ -1,5 +1,6 @@
 package com.gnl.workhub.backend.service;
 
+import com.gnl.workhub.backend.dto.ActivityLogResponse;
 import com.gnl.workhub.backend.entity.ActivityLog;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.Task;
@@ -12,11 +13,26 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ActivityLogService {
     private final ActivityLogRepository repository;
+
+    public List<ActivityLogResponse> getTaskActivity(UUID taskId) {
+        return repository.findAllByTaskIdOrderByTimestampDesc(taskId)
+                .stream()
+                .map(log -> ActivityLogResponse.builder()
+                        .id(log.getId())
+                        .action(log.getAction())
+                        .details(log.getDetails())
+                        .performedBy(log.getPerformedBy() != null ? log.getPerformedBy().getFullName() : "System")
+                        .taskTitle(log.getTask().getTitle())
+                        .timestamp(log.getTimestamp())
+                        .build())
+                .toList();
+    }
 
     // Log a Project-level event
     @Transactional

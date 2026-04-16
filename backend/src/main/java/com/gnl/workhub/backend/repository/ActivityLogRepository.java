@@ -15,4 +15,7 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, UUID> 
 
     // Task History: Only logs for a specific task
     List<ActivityLog> findByTaskIdOrderByTimestampDesc(UUID taskId);
+
+    // Fetch logs for a specific task, newest first
+    List<ActivityLog> findAllByTaskIdOrderByTimestampDesc(UUID taskId);
 }
