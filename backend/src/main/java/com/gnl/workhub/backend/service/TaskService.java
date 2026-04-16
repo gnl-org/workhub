@@ -36,6 +36,7 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ActivityLogService activityLogService;
 
     @Transactional
     public TaskResponse createTask(UUID projectId, TaskRequest request) {
@@ -58,6 +59,7 @@ public class TaskService {
 
         // 4. Save
         Task task = taskMapper.toEntity(request, project, assignee);
+        activityLogService.logTaskEvent(task, currentUser, "TASK_CREATED", "Task created");
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
@@ -77,6 +79,7 @@ public class TaskService {
         }
 
         taskMapper.updateEntityFromRequest(request, task, assignee);
+        activityLogService.logTaskEvent(task, currentUser, "TASK_UPDATED", "Task created");
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
