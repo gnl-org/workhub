@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -24,6 +25,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     List<Task> findByProjectIdAndAssignedToId(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
 
     @Query("SELECT t FROM Task t WHERE t.project.id = :projectId " +
+            "AND t.deleted = false " +
             "AND (:status IS NULL OR t.status = :status) " +
             "AND (:priority IS NULL OR t.priority = :priority)")
     List<Task> findFilteredTasks(
@@ -31,4 +33,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
             @Param("status") TaskStatus status,
             @Param("priority") TaskPriority priority
     );
+
+    // Ensure users can't find a deleted task by its direct ID
+    Optional<Task> findByIdAndDeletedFalse(UUID id);
 }

@@ -53,12 +53,14 @@ public class ActivityLogService {
         private final String oldStatus;
         private final String oldPriority;
         private final String oldAssigneeEmail;
+        private final boolean oldDeleted;
 
         public TaskChangeTracker(Task task) {
             this.oldStatus = String.valueOf(task.getStatus());
             this.oldPriority = String.valueOf(task.getPriority());
             this.oldAssigneeEmail = task.getAssignedTo() != null
                     ? task.getAssignedTo().getEmail() : "Unassigned";
+            this.oldDeleted = task.isDeleted();
         }
 
         public String detectChanges(Task updatedTask) {
@@ -70,6 +72,7 @@ public class ActivityLogService {
             track("Status", oldStatus, newStatus);
             track("Priority", oldPriority, newPriority);
             track("Assignee", oldAssigneeEmail, newAssigneeEmail);
+            track("Deleted", String.valueOf(oldDeleted), String.valueOf(updatedTask.isDeleted()));
 
             return changes.isEmpty() ? "Task updated" : String.join(" | ", changes);
         }

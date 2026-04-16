@@ -98,7 +98,11 @@ public class TaskService {
             throw new AccessDeniedException("Only the project owner can delete tasks.");
         }
 
-        taskRepository.delete(task);
+        Task oldState = task.toBuilder().build();
+        task.setDeleted(true);
+        Task savedTask = taskRepository.save(task);
+
+        activityLogService.logTaskUpdate(oldState, savedTask, currentUser);
     }
 
     public TaskResponse getTaskById(UUID projectId, UUID taskId) {
@@ -123,8 +127,11 @@ public class TaskService {
 
     // --- NEW HELPER FOR THE "SNEAKY USER" TEST ---
     private Task getValidatedTask(UUID projectId, UUID taskId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+//        Task task = taskRepository.findById(taskId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        Task task = taskRepository.findByIdAndDeletedFalse(taskId)
+                .filter(eachtask -> eachtask.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found or has been deleted"));
 
         // The "Sneaky User" check: Ensure task belongs to the project in the URL
         if (!task.getProject().getId().equals(projectId)) {
