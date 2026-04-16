@@ -13,15 +13,15 @@ public class TaskMapper {
 
     // Map Request -> Entity
     public Task toEntity(TaskRequest request, Project project, User assignee) {
-        Task task = new Task();
-        task.setTitle(request.getTitle());
-        task.setDescription(request.getDescription());
-        task.setProject(project);
-        task.setAssignedTo(assignee);
-        task.setStatus(request.getStatus());
-        task.setPriority(request.getPriority());
-        task.setDueDate(request.getDueDate());
-        return task;
+        return Task.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .project(project)
+                .assignedTo(assignee)
+                .status(request.getStatus())
+                .priority(request.getPriority())
+                .dueDate(request.getDueDate())
+                .build();
     }
 
     // Partial update - Map UpdateRequest -> Entity (only update non-null fields)

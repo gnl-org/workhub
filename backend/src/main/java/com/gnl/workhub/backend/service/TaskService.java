@@ -59,7 +59,6 @@ public class TaskService {
 
         // 4. Save
         Task task = taskMapper.toEntity(request, project, assignee);
-        activityLogService.logTaskEvent(task, currentUser, "TASK_CREATED", "Task created");
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
@@ -79,8 +78,13 @@ public class TaskService {
         }
 
         taskMapper.updateEntityFromRequest(request, task, assignee);
-        activityLogService.logTaskEvent(task, currentUser, "TASK_UPDATED", "Task created");
-        return taskMapper.toResponse(taskRepository.save(task));
+        Task savedTask = taskRepository.save(task);
+
+        // Activity log
+        Task oldState = task.toBuilder().build();
+        activityLogService.logTaskUpdate(oldState, savedTask, currentUser);
+
+        return taskMapper.toResponse(savedTask);
     }
 
     @Transactional

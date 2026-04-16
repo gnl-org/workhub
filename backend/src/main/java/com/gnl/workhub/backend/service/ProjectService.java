@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,7 +30,6 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
-    private final ActivityLogService activityLogService;
 
     // --- HELPER METHODS ---
     private User getCurrentUser() {
@@ -64,7 +62,6 @@ public class ProjectService {
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         Project project = projectMapper.toEntity(request, getCurrentUser());
-        activityLogService.logProjectEvent(project, null, "PROJECT_CREATED", "Project " + project.getTitle() + " created");
         return projectMapper.toResponse(projectRepository.save(project));
     }
 
@@ -80,7 +77,6 @@ public class ProjectService {
         validateProjectAccess(project, getCurrentUser());
 
         projectMapper.updateEntityFromRequest(request, project);
-        activityLogService.logProjectEvent(project, null, "PROJECT_UPDATED", "Project updated");
         return projectMapper.toResponse(projectRepository.save(project));
     }
 

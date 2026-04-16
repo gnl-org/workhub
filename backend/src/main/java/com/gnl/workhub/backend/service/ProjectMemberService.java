@@ -21,7 +21,6 @@ public class ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
-    private final ActivityLogService activityLogService;
 
     @Transactional
     public void addMemberToProject(ProjectMemberRequest request) {
@@ -53,6 +52,5 @@ public class ProjectMemberService {
         member.setProjectRole(request.projectRole());
 
         projectMemberRepository.save(member);
-        activityLogService.logProjectEvent(project, inviter, "MEMBER_ADDED", "Added user " + invitee.getFullName());
     }
 }
