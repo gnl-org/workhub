@@ -2,7 +2,6 @@ package com.gnl.workhub.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -14,17 +13,21 @@ public class ActivityLog {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    private String action;   // e.g., "TASK_STATUS_UPDATED", "MEMBER_ADDED"
-    private String details;  // e.g., "Changed status from OPEN to IN_PROGRESS"
+    private String action;
+    private String details;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Project project; // Always present
+    @JoinColumn(name = "project_id", nullable = false) // Maps to project_id column
+    private Project project;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    private Task task;       // NULL if the action is project-level (like adding a member)
+    @JoinColumn(name = "task_id") // Maps to task_id column (nullable by default)
+    private Task task;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id") // Maps to user_id column in your SQL
     private User performedBy;
 
+    @Column(nullable = false, updatable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
 }
