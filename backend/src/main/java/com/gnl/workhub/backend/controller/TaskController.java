@@ -3,6 +3,8 @@ package com.gnl.workhub.backend.controller;
 import com.gnl.workhub.backend.dto.TaskRequest;
 import com.gnl.workhub.backend.dto.TaskResponse;
 import com.gnl.workhub.backend.dto.UpdateTaskRequest;
+import com.gnl.workhub.backend.enums.TaskPriority;
+import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +17,17 @@ import java.util.UUID;
 public class TaskController {
     private final TaskService taskService;
 
-    @PostMapping("/project/{projectId}/tasks")
+    @PostMapping("/projects/{projectId}/tasks")
     public TaskResponse createTask(@PathVariable UUID projectId, @RequestBody TaskRequest request) {
         return taskService.createTask(projectId, request);
     }
 
-    @GetMapping("/project/{projectId}/tasks/{taskId}")
+    @GetMapping("/projects/{projectId}/tasks/{taskId}")
     public TaskResponse getTaskById(@PathVariable UUID projectId, @PathVariable UUID taskId) {
         return taskService.getTaskById(projectId, taskId);
     }
 
-    @PatchMapping("/project/{projectId}/tasks/{taskId}")
+    @PatchMapping("/projects/{projectId}/tasks/{taskId}")
     public TaskResponse updateTask(
             @PathVariable UUID projectId,
             @PathVariable UUID taskId,
@@ -33,8 +35,16 @@ public class TaskController {
         return taskService.updateTask(projectId, taskId, request);
     }
 
-    @DeleteMapping("/project/{projectId}/tasks/{taskId}")
+    @DeleteMapping("/projects/{projectId}/tasks/{taskId}")
     public void deleteTask(@PathVariable UUID projectId, @PathVariable UUID taskId) {
         taskService.deleteTask(projectId, taskId);
+    }
+
+    @GetMapping("/projects/{projectId}/tasks")
+    public List<TaskResponse> getTasksByProject(
+            @PathVariable UUID projectId,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority) {
+        return taskService.getTasksByProjectId(projectId, status, priority);
     }
 }

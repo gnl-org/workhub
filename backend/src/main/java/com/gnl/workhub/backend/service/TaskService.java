@@ -7,6 +7,8 @@ import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.Task;
 import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.enums.TaskPriority;
+import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.TaskMapper;
@@ -21,7 +23,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +98,20 @@ public class TaskService {
         Task task = getValidatedTask(projectId, taskId);
         validateTaskAccess(task, getCurrentUser());
         return taskMapper.toResponse(task);
+    }
+
+    public List<TaskResponse> getTasksByProjectId(UUID projectId, TaskStatus status, TaskPriority priority) {
+        // 1. Verify project existence and current user access
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        validateProjectAccess(project, getCurrentUser());
+
+        // 2. Fetch with filters
+        List<Task> tasks = taskRepository.findFilteredTasks(projectId, status, priority);
+
+        return tasks.stream()
+                .map(taskMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     // --- NEW HELPER FOR THE "SNEAKY USER" TEST ---
