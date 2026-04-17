@@ -6,6 +6,7 @@ import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.enums.ProjectRole;
 import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.ProjectMapper;
@@ -61,8 +62,19 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
-        Project project = projectMapper.toEntity(request, getCurrentUser());
-        return projectMapper.toResponse(projectRepository.save(project));
+        User currentUser = getCurrentUser();
+
+        Project project = projectMapper.toEntity(request, currentUser);
+        Project savedProject = projectRepository.save(project);
+
+        ProjectMember ownerMember = new ProjectMember();
+        ownerMember.setProject(savedProject);
+        ownerMember.setUser(currentUser);
+        ownerMember.setProjectRole(ProjectRole.OWNER); // Or your specific Enum value
+
+        projectMemberRepository.save(ownerMember);
+
+        return projectMapper.toResponse(savedProject);
     }
 
     public List<ProjectResponse> getMyProjects() {
