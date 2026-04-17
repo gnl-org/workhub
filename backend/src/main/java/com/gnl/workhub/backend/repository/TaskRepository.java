@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,11 +30,19 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     @Query("SELECT t FROM Task t WHERE t.project.id = :projectId " +
             "AND t.deleted = false " +
             "AND (:status IS NULL OR t.status = :status) " +
-            "AND (:priority IS NULL OR t.priority = :priority)")
-    Page<Task> findFilteredTasks(
+            "AND (:priority IS NULL OR t.priority = :priority) " +
+            "AND (:assigneeId IS NULL OR t.assignedTo.id = :assigneeId) " +
+            "AND (CAST(:searchTerm AS text) IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', CAST(:searchTerm AS text), '%'))) " +
+            "AND (CAST(:startDate AS timestamp) IS NULL OR t.dueDate >= :startDate) " +
+            "AND (CAST(:endDate AS timestamp) IS NULL OR t.dueDate <= :endDate)")
+    Page<Task> findAdvancedFilteredTasks(
             @Param("projectId") UUID projectId,
             @Param("status") TaskStatus status,
             @Param("priority") TaskPriority priority,
+            @Param("assigneeId") UUID assigneeId,
+            @Param("searchTerm") String searchTerm,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
             Pageable pageable
     );
 

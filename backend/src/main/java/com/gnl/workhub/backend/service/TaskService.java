@@ -25,6 +25,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -118,6 +119,10 @@ public class TaskService {
             UUID projectId,
             TaskStatus status,
             TaskPriority priority,
+            UUID assigneeId,
+            String searchTerm,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
             Pageable pageable) {
 
         // 1. Verify project existence and current user access
@@ -127,7 +132,9 @@ public class TaskService {
         validateProjectAccess(project, getCurrentUser());
 
         // 2. Fetch with filters AND pagination
-        Page<Task> tasks = taskRepository.findFilteredTasks(projectId, status, priority, pageable);
+        Page<Task> tasks = taskRepository.findAdvancedFilteredTasks(
+                projectId, status, priority, assigneeId, searchTerm, startDate, endDate, pageable
+        );
 
         // 3. Map the Page of entities to a Page of Responses
         return tasks.map(taskMapper::toResponse);
