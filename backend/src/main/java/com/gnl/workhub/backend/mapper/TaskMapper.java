@@ -18,7 +18,7 @@ public class TaskMapper {
                 .description(request.getDescription())
                 .project(project)
                 .assignedTo(assignee)
-                .createdBy(creator)
+                .owner(creator)
                 .status(request.getStatus())
                 .priority(request.getPriority())
                 .dueDate(request.getDueDate())
@@ -71,8 +71,8 @@ public class TaskMapper {
             response.setAssigneeName("Unassigned");
         }
 
-        if (task.getCreatedBy() != null) {
-            response.setCreatedBy(task.getCreatedBy().getFullName());
+        if (task.getOwner() != null) {
+            response.setOwner(task.getOwner().getFullName());
         }
 
         return response;

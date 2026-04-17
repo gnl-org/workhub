@@ -14,7 +14,7 @@ import java.util.UUID;
 @Getter @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class Task {
+public class Task extends BaseEntity {
     @Id
     @GeneratedValue
     private UUID id;
@@ -28,8 +28,8 @@ public class Task {
     private User assignedTo;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false, updatable = false)
-    private User createdBy;
+    @JoinColumn(name = "owner", nullable = false, updatable = false)
+    private User owner;
 
     private String title;
 
@@ -45,24 +45,7 @@ public class Task {
     @Column(name = "due_date")
     private LocalDateTime dueDate;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

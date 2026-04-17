@@ -100,7 +100,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .status(TaskStatus.values()[faker.random().nextInt(TaskStatus.values().length)])
                     .priority(TaskPriority.values()[faker.random().nextInt(TaskPriority.values().length)])
                     .project(project)
-                    .createdBy(creator)
+                    .owner(creator)
                     .assignedTo(assignee)
                     .dueDate(LocalDateTime.now().plusDays(faker.random().nextInt(1, 30)))
                     .build();

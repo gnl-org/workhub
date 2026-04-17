@@ -19,5 +19,5 @@ public class TaskResponse {
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String createdBy;
+    private String owner;
 }

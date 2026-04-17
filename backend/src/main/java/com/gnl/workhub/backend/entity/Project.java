@@ -11,7 +11,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "projects")
 @Getter @Setter
-public class Project {
+public class Project extends BaseEntity {
     @Id
     @GeneratedValue
     private UUID id;
@@ -27,21 +27,4 @@ public class Project {
 
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }
