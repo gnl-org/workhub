@@ -48,4 +48,13 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     // Ensure users can't find a deleted task by its direct ID
     Optional<Task> findByIdAndDeletedFalse(UUID id);
+
+    long countByProjectId(UUID projectId);
+
+    @Query("SELECT t.status, COUNT(t) FROM Task t WHERE t.project.id = :projectId GROUP BY t.status")
+    List<Object[]> countTasksByStatus(UUID projectId);
+
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId " +
+            "AND t.dueDate < CURRENT_TIMESTAMP AND t.status != 'DONE'")
+    long countOverdueTasks(UUID projectId);
 }

@@ -2,16 +2,19 @@ package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.dto.ProjectRequest;
 import com.gnl.workhub.backend.dto.ProjectResponse;
+import com.gnl.workhub.backend.dto.ProjectStats;
 import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
 import com.gnl.workhub.backend.enums.ProjectRole;
+import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.ProjectMapper;
 import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
+import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +24,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +34,7 @@ public class ProjectService {
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
+    private final TaskRepository taskRepository;
 
     // --- HELPER METHODS ---
     private User getCurrentUser() {
@@ -103,6 +107,36 @@ public class ProjectService {
         }
 
         projectRepository.delete(project);
+    }
+
+    public ProjectStats getProjectStats(UUID projectId) {
+        // 1. Verify access...
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
+
+        User user = getCurrentUser();
+        if (!project.getOwner().getId().equals(user.getId()) && user.getGlobalRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("Only the owner can delete this project");
+        }
+
+        // 2. Gather data
+        long total = taskRepository.countByProjectId(projectId);
+        long overdue = taskRepository.countOverdueTasks(projectId);
+
+        // Initialize with zeros for every status
+        Map<TaskStatus, Long> statusMap = new EnumMap<>(TaskStatus.class);
+        Arrays.stream(TaskStatus.values()).forEach(s -> statusMap.put(s, 0L));
+
+        // Merge the database results into the map
+        taskRepository.countTasksByStatus(projectId).forEach(row ->
+                statusMap.put((TaskStatus) row[0], (Long) row[1])
+        );
+
+        return ProjectStats.builder()
+                .totalTasks(total)
+                .statusCounts(statusMap)
+                .overdueTasks(overdue)
+                .build();
     }
 
     private void validateProjectAccess(Project project, User user) {

@@ -2,9 +2,11 @@ package com.gnl.workhub.backend.controller;
 
 import com.gnl.workhub.backend.dto.ProjectRequest;
 import com.gnl.workhub.backend.dto.ProjectResponse;
+import com.gnl.workhub.backend.dto.ProjectStats;
 import com.gnl.workhub.backend.dto.UpdateProjectRequest;
 import com.gnl.workhub.backend.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +26,11 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ProjectResponse getProjectById(@PathVariable UUID id) {
         return projectService.getProjectById(id);
+    }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<ProjectStats> getProjectStats(@PathVariable UUID id) {
+        return ResponseEntity.ok(projectService.getProjectStats(id));
     }
 
     @PostMapping

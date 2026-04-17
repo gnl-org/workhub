@@ -62,7 +62,7 @@ public class ActivityLogService {
         repository.save(log);
     }
 
-    public class TaskChangeTracker {
+    public static class TaskChangeTracker {
         private final List<String> changes = new ArrayList<>();
 
         // Captured "Before" state
