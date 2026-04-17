@@ -1,5 +1,6 @@
 package com.gnl.workhub.backend.service;
 
+import com.gnl.workhub.backend.dto.TaskFilterRequest;
 import com.gnl.workhub.backend.dto.TaskRequest;
 import com.gnl.workhub.backend.dto.TaskResponse;
 import com.gnl.workhub.backend.dto.UpdateTaskRequest;
@@ -16,9 +17,11 @@ import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
+import com.gnl.workhub.backend.specification.TaskSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -113,15 +116,7 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public Page<TaskResponse> getTasksByProjectId(
-            UUID projectId,
-            TaskStatus status,
-            TaskPriority priority,
-            UUID assigneeId,
-            String searchTerm,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
-            Pageable pageable) {
+    public Page<TaskResponse> getTasksByProjectId(UUID projectId, TaskFilterRequest filters, Pageable pageable) {
 
         // 1. Verify project existence and current user access
         Project project = projectRepository.findById(projectId)
@@ -130,9 +125,11 @@ public class TaskService {
         validateProjectAccess(project, getCurrentUser());
 
         // 2. Fetch with filters AND pagination
-        Page<Task> tasks = taskRepository.findAdvancedFilteredTasks(
-                projectId, status, priority, assigneeId, searchTerm, startDate, endDate, pageable
-        );
+//        Page<Task> tasks = taskRepository.findAdvancedFilteredTasks(
+//                projectId, status, priority, assigneeId, searchTerm, startDate, endDate, pageable
+//        );
+        Specification<Task> spec = TaskSpecifications.build(projectId, filters);
+        Page<Task> tasks = taskRepository.findAll(spec, pageable);
 
         // 3. Map the Page of entities to a Page of Responses
         return tasks.map(taskMapper::toResponse);

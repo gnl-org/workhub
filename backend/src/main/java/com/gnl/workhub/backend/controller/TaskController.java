@@ -1,5 +1,6 @@
 package com.gnl.workhub.backend.controller;
 
+import com.gnl.workhub.backend.dto.TaskFilterRequest;
 import com.gnl.workhub.backend.dto.TaskRequest;
 import com.gnl.workhub.backend.dto.TaskResponse;
 import com.gnl.workhub.backend.dto.UpdateTaskRequest;
@@ -50,16 +51,11 @@ public class TaskController {
     @GetMapping("/projects/{projectId}/tasks")
     public ResponseEntity<Page<TaskResponse>> getTasks(
             @PathVariable UUID projectId,
-            @RequestParam(required = false) TaskStatus status,
-            @RequestParam(required = false) TaskPriority priority,
-            @RequestParam(required = false) UUID assigneeId,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            TaskFilterRequest filters,
             @PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
 
         return ResponseEntity.ok(taskService.getTasksByProjectId(
-                projectId, status, priority, assigneeId, search, start, end, pageable
+                projectId, filters, pageable
         ));
     }
 }
