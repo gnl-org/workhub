@@ -4,45 +4,49 @@ erDiagram
     USER ||--o{ PROJECT_MEMBER : "is part of"
     PROJECT ||--o{ PROJECT_MEMBER : "has"
     PROJECT ||--o{ TASK : "contains"
-    USER ||--o{ TASK : "is assigned to"
+    USER ||--o{ TASK : "is responsible for (owner)"
+    USER ||--o{ TASK : "is assigned to (assigned_to)"
+    PROJECT ||--o{ ACTIVITY_LOG : "has"
 
     USER {
         uuid id PK
-        string email UK
-        string password_hash
-        string full_name
-        string global_role
+        string email
+        string created_by
         timestamp created_at
-        timestamp updated_at
     }
 
     PROJECT {
         uuid id PK
         string title
-        text description
         uuid owner_id FK
-        string status
+        string created_by
         timestamp created_at
-        timestamp updated_at
-    }
-
-    TASK {
-        uuid id PK
-        uuid project_id FK
-        uuid assigned_to FK
-        string title
-        text description
-        string status
-        string priority
-        timestamp due_date
-        timestamp created_at
-        timestamp updated_at
     }
 
     PROJECT_MEMBER {
         uuid project_id PK, FK
         uuid user_id PK, FK
         string project_role
-        timestamp joined_at
+        string created_by
+        timestamp created_at
+    }
+
+    TASK {
+        uuid id PK
+        uuid project_id FK
+        uuid owner FK
+        uuid assigned_to FK
+        string title
+        boolean deleted
+        string created_by
+        timestamp created_at
+    }
+
+    ACTIVITY_LOG {
+        uuid id PK
+        string action
+        uuid project_id FK
+        uuid user_id FK
+        timestamp timestamp
     }
 ```
