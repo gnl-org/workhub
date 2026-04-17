@@ -39,6 +39,11 @@ public class SecurityConfig {
                         // 1. Public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/health").permitAll()
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
 
                         // 2. Role-based endpoints (Locked to ADMIN)
                         // Note: .hasRole("ADMIN") automatically checks for "ROLE_ADMIN"
