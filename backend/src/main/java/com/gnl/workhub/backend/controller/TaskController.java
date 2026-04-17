@@ -7,6 +7,11 @@ import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.service.TaskService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,10 +46,11 @@ public class TaskController {
     }
 
     @GetMapping("/projects/{projectId}/tasks")
-    public List<TaskResponse> getTasksByProject(
+    public ResponseEntity<Page<TaskResponse>> getTasks(
             @PathVariable UUID projectId,
             @RequestParam(required = false) TaskStatus status,
-            @RequestParam(required = false) TaskPriority priority) {
-        return taskService.getTasksByProjectId(projectId, status, priority);
+            @RequestParam(required = false) TaskPriority priority,
+            @PageableDefault(size = 15, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(taskService.getTasksByProjectId(projectId, status, priority, pageable));
     }
 }

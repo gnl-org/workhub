@@ -17,6 +17,8 @@ import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -111,18 +113,24 @@ public class TaskService {
         return taskMapper.toResponse(task);
     }
 
-    public List<TaskResponse> getTasksByProjectId(UUID projectId, TaskStatus status, TaskPriority priority) {
+    @Transactional(readOnly = true)
+    public Page<TaskResponse> getTasksByProjectId(
+            UUID projectId,
+            TaskStatus status,
+            TaskPriority priority,
+            Pageable pageable) {
+
         // 1. Verify project existence and current user access
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+
         validateProjectAccess(project, getCurrentUser());
 
-        // 2. Fetch with filters
-        List<Task> tasks = taskRepository.findFilteredTasks(projectId, status, priority);
+        // 2. Fetch with filters AND pagination
+        Page<Task> tasks = taskRepository.findFilteredTasks(projectId, status, priority, pageable);
 
-        return tasks.stream()
-                .map(taskMapper::toResponse)
-                .collect(Collectors.toList());
+        // 3. Map the Page of entities to a Page of Responses
+        return tasks.map(taskMapper::toResponse);
     }
 
     // --- NEW HELPER FOR THE "SNEAKY USER" TEST ---
