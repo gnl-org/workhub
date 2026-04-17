@@ -19,5 +19,5 @@ public class TaskResponse {
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    // private String createdBy; TODO: add created by user name
+    private String createdBy;
 }

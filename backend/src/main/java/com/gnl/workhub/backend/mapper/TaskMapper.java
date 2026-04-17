@@ -12,12 +12,13 @@ import org.springframework.stereotype.Component;
 public class TaskMapper {
 
     // Map Request -> Entity
-    public Task toEntity(TaskRequest request, Project project, User assignee) {
+    public Task toEntity(TaskRequest request, Project project, User assignee, User creator) {
         return Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .project(project)
                 .assignedTo(assignee)
+                .createdBy(creator)
                 .status(request.getStatus())
                 .priority(request.getPriority())
                 .dueDate(request.getDueDate())
@@ -68,6 +69,10 @@ public class TaskMapper {
             response.setAssigneeName(fullName);
         } else {
             response.setAssigneeName("Unassigned");
+        }
+
+        if (task.getCreatedBy() != null) {
+            response.setCreatedBy(task.getCreatedBy().getFullName());
         }
 
         return response;

@@ -58,7 +58,7 @@ public class TaskService {
         }
 
         // 4. Save
-        Task task = taskMapper.toEntity(request, project, assignee);
+        Task task = taskMapper.toEntity(request, project, assignee, currentUser);
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
