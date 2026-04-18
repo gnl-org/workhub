@@ -12,12 +12,12 @@ public class TaskResponse {
     private UUID id;
     private String title;
     private String description;
-    private String projectTitle; // Useful for breadcrumbs in UI
+    private UUID projectTitle;
     private String assigneeName; // "John Doe" instead of a nested User object
     private TaskStatus status;
     private TaskPriority priority;
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private String owner;
+    private UUID owner;
 }

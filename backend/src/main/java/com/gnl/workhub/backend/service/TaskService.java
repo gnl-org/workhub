@@ -1,9 +1,6 @@
 package com.gnl.workhub.backend.service;
 
-import com.gnl.workhub.backend.dto.TaskFilterRequest;
-import com.gnl.workhub.backend.dto.TaskRequest;
-import com.gnl.workhub.backend.dto.TaskResponse;
-import com.gnl.workhub.backend.dto.UpdateTaskRequest;
+import com.gnl.workhub.backend.dto.*;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.Task;
@@ -12,6 +9,7 @@ import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
+import com.gnl.workhub.backend.mapper.TaskDetailsMapper;
 import com.gnl.workhub.backend.mapper.TaskMapper;
 import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
@@ -39,6 +37,7 @@ public class TaskService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final TaskMapper taskMapper;
+    private final TaskDetailsMapper taskDetailsMapper;
     private final ProjectMemberRepository projectMemberRepository;
     private final ActivityLogService activityLogService;
 
@@ -109,10 +108,10 @@ public class TaskService {
         activityLogService.logTaskUpdate(oldState, savedTask, currentUser);
     }
 
-    public TaskResponse getTaskById(UUID projectId, UUID taskId) {
+    public TaskDetailsResponse getTaskById(UUID projectId, UUID taskId) {
         Task task = getValidatedTask(projectId, taskId);
         validateTaskAccess(task, getCurrentUser());
-        return taskMapper.toResponse(task);
+        return taskDetailsMapper.toResponse(task);
     }
 
     @Transactional(readOnly = true)

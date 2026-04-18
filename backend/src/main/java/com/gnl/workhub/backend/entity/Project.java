@@ -5,16 +5,10 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 @Entity
 @Table(name = "projects")
 @Getter @Setter
 public class Project extends BaseEntity {
-    @Id
-    @GeneratedValue
-    private UUID id;
 
     private String title;
 

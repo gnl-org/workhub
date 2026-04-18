@@ -1,9 +1,6 @@
 package com.gnl.workhub.backend.controller;
 
-import com.gnl.workhub.backend.dto.TaskFilterRequest;
-import com.gnl.workhub.backend.dto.TaskRequest;
-import com.gnl.workhub.backend.dto.TaskResponse;
-import com.gnl.workhub.backend.dto.UpdateTaskRequest;
+import com.gnl.workhub.backend.dto.*;
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.service.TaskService;
@@ -31,7 +28,7 @@ public class TaskController {
     }
 
     @GetMapping("/projects/{projectId}/tasks/{taskId}")
-    public TaskResponse getTaskById(@PathVariable UUID projectId, @PathVariable UUID taskId) {
+    public TaskDetailsResponse getTaskById(@PathVariable UUID projectId, @PathVariable UUID taskId) {
         return taskService.getTaskById(projectId, taskId);
     }
 

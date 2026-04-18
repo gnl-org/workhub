@@ -57,11 +57,8 @@ public class TaskMapper {
         response.setDueDate(task.getDueDate());
         response.setCreatedAt(task.getCreatedAt());
         response.setUpdatedAt(task.getUpdatedAt());
-
-        // Handle Project info
-        if (task.getProject() != null) {
-            response.setProjectTitle(task.getProject().getTitle());
-        }
+        response.setOwner(task.getOwner().getId());
+        response.setProjectTitle(task.getProject().getId());
 
         // Handle Assignee info for the "assigneeName" field
         if (task.getAssignedTo() != null) {
@@ -69,10 +66,6 @@ public class TaskMapper {
             response.setAssigneeName(fullName);
         } else {
             response.setAssigneeName("Unassigned");
-        }
-
-        if (task.getOwner() != null) {
-            response.setOwner(task.getOwner().getFullName());
         }
 
         return response;

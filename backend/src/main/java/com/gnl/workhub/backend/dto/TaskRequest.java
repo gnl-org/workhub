@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.dto;
 
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -16,3 +17,4 @@ public class TaskRequest {
     private TaskPriority priority;
     private LocalDateTime dueDate;
 }
+

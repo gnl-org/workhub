@@ -10,26 +10,32 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
 @MappedSuperclass
-@EntityListeners(AuditingEntityListener.class) // 🚀 This is the "magic" that captures the events
+@EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at", insertable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     @CreatedBy
-    @JoinColumn(name = "created_by", updatable = false)
+    @Column(name = "created_by", updatable = false)
     private String createdBy;
 
     @LastModifiedBy
-    @Column(name = "updated_by", insertable = false)
+    @Column(name = "updated_by")
     private String lastModifiedBy;
 }

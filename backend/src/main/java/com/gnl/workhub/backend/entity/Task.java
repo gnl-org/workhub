@@ -6,7 +6,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
@@ -15,9 +16,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Task extends BaseEntity {
-    @Id
-    @GeneratedValue
-    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -48,4 +46,9 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;
+
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt DESC")
+    @ToString.Exclude // Prevents infinite loops!
+    private List<TaskComment> comments = new ArrayList<>();
 }
