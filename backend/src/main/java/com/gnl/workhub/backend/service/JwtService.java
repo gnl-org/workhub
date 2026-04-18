@@ -23,7 +23,11 @@ public class JwtService {
 
     // 1. Generate a Token (The "Printing Press")
     public String generateToken(UserDetails userDetails) {
+        var user = (com.gnl.workhub.backend.entity.User) userDetails;
+
         return Jwts.builder()
+                .claim("role", user.getGlobalRole().name())
+                .claim("fullName", user.getFullName())
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
