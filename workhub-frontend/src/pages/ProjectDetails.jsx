@@ -18,9 +18,9 @@ export default function ProjectDetails() {
   }, [projectId]);
 
   const tabs = [
-    { id: 'info', label: 'Project Info', icon: Info },
     { id: 'backlog', label: 'Backlog', icon: ListTodo },
     { id: 'sprint', label: 'Active Sprint', icon: Boxes },
+    { id: 'info', label: 'Project Info', icon: Info },
   ];
 
   return (

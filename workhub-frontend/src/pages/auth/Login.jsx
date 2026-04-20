@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
-import api from '../api/axios';
+import api from '../../api/axios';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -56,7 +56,10 @@ export default function Login() {
             <div className="space-y-1.5">
               <div className="flex justify-between items-center px-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Password</label>
-                <a href="#" className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">Forgot?</a>
+                {/* <a href="#" className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700">Forgot?</a> */}
+                <span className="text-[11px] font-bold text-slate-300 cursor-not-allowed select-none">
+                  Forgot?
+                </span>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition" size={18} />

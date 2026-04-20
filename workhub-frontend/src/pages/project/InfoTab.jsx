@@ -1,31 +1,75 @@
-export default function InfoTab({ project, projectId }) {
-  return (
-    <div className="p-8 max-w-5xl mx-auto grid grid-cols-3 gap-8">
-      <div className="col-span-2 space-y-6">
-        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-sm font-black text-slate-400 uppercase mb-4">About Project</h3>
-          <p className="text-slate-700 leading-relaxed">{project?.description}</p>
-        </section>
-        
-        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-sm font-black text-slate-400 uppercase mb-4">Recent Activity</h3>
-          <div className="text-slate-400 italic text-sm text-center py-10">
-            Latest 10 tasks will be listed here...
-          </div>
-        </section>
-      </div>
+import React, { useState, useEffect } from 'react';
+import { useModal } from '../../hooks/useModal';
+import { useProjects } from '../../hooks/useProjects';
+import Modal from '../../components/Modal';
+import ProjectDetailsCard from './components/ProjectDetailsCard';
+import ProjectMembersCard from './components/ProjectMembersCard';
 
-      <div className="col-span-1 space-y-6">
-        <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-          <h3 className="text-sm font-black text-slate-400 uppercase mb-4">Team Members</h3>
-          <div className="space-y-3">
-             <div className="flex items-center gap-3 text-sm font-medium">
-               <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">JD</div>
-               <span>{project?.ownerName} (Owner)</span>
-             </div>
+export default function InfoTab({ project, onUpdate }) {
+  const addMemberModal = useModal();
+  const [email, setEmail] = useState('');
+  const { addMemberToProject, isSubmitting, fetchMembers, members } = useProjects();
+
+  useEffect(() => {
+    if (project?.id) {
+      fetchMembers(project.id);
+    }
+  }, [project?.id, fetchMembers]);
+
+  const handleAddMember = async (e) => {
+    e.preventDefault();
+    const res = await addMemberToProject(project.id, email);
+    if (res.success) {
+      setEmail('');
+      addMemberModal.close();
+      onUpdate(); 
+    } else {
+      alert(res.error);
+    }
+  };
+
+  if (!project) return null;
+
+  return (
+    /* Change 1: Max width and margin auto to center. Vertical space between cards. */
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Detail Card on top */}
+      <ProjectDetailsCard 
+        project={project} 
+        onEditClick={() => {/* handle edit */}} 
+        onDeleteClick={() => {/* handle delete */}} 
+      />
+
+      {/* Members Card below */}
+      <ProjectMembersCard 
+        members={members || []} 
+        onAddClick={addMemberModal.open}
+        isAdmin={true} 
+      />
+
+      <Modal isOpen={addMemberModal.isOpen} onClose={addMemberModal.close} title="Invite Member">
+        <form onSubmit={handleAddMember} className="space-y-6">
+          <div className="p-1"> {/* Tiny padding to prevent input ring clipping */}
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Email Address</label>
+            <input 
+              type="email" 
+              required
+              className="w-full mt-2 px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+              placeholder="user@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-        </section>
-      </div>
+          <button 
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 active:scale-[0.98]"
+          >
+            {isSubmitting ? "Inviting..." : "Add to Project"}
+          </button>
+        </form>
+      </Modal>
     </div>
   );
 }
