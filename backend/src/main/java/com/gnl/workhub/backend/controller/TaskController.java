@@ -1,20 +1,15 @@
 package com.gnl.workhub.backend.controller;
 
 import com.gnl.workhub.backend.dto.*;
-import com.gnl.workhub.backend.enums.TaskPriority;
-import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @RestController

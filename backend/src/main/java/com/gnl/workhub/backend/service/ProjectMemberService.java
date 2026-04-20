@@ -1,6 +1,7 @@
 package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.dto.ProjectMemberRequest;
+import com.gnl.workhub.backend.dto.ProjectMemberResponse;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
 import com.gnl.workhub.backend.entity.User;
@@ -13,6 +14,9 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -52,5 +56,19 @@ public class ProjectMemberService {
         member.setProjectRole(request.projectRole());
 
         projectMemberRepository.save(member);
+    }
+
+    public List<ProjectMemberResponse> getMembers(UUID projectId) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new RuntimeException("Project not found"));
+
+        List<ProjectMember> members = projectMemberRepository.findMembersByProjectId(projectId);
+
+        return members.stream()
+                .map(id -> ProjectMemberResponse.builder()
+                        .userName(id.getUser().getFullName())
+                        .userEmail(id.getUser().getEmail())
+                        .build())
+                .toList();
     }
 }
