@@ -3,7 +3,7 @@ import MainLayout from './components/MainLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
-import ProjectDetails from './pages/ProjectDetails';
+import ProjectDetails from './pages/project/ProjectDetails';
 import './index.css';
 
 // The guard component

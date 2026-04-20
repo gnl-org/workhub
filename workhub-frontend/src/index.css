@@ -64,9 +64,17 @@ body {
 }
 
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
+  /* Fill the screen on mobile/tablets */
+  width: 100%; 
+  
+  /* The "sweet spot" for dashboards you requested (approx 1382px) */
+  /* max-width: 86rem;  */
+  
+  /* margin: 0 auto; */
+  
+  /* Add consistent horizontal padding so content doesn't touch the edges on mobile */
+  /* padding-inline: 2rem;  */
+  
   text-align: center;
   border-inline: 1px solid var(--border);
   min-height: 100svh;

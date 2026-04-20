@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Info, ListTodo, Boxes, ChevronLeft } from 'lucide-react';
-import api from '../api/axios';
+import api from '../../api/axios';
 
 // Tab Components
-import InfoTab from './project/InfoTab';
-import BacklogTab from './project/BacklogTab';
-import ActiveSprintTab from './project/ActiveSprintTab';
+import InfoTab from './InfoTab';
+import BacklogTab from './BacklogTab';
+import ActiveSprintTab from './ActiveSprintTab';
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
@@ -54,7 +54,7 @@ export default function ProjectDetails() {
 
       {/* Dynamic Content */}
       <main className="flex-1 bg-slate-50/50">
-        {activeTab === 'info' && <InfoTab projectId={projectId} project={project} />}
+        {activeTab === 'info' && <InfoTab projectId={projectId} project={project} updateProject={setProject} />}
         {activeTab === 'backlog' && <BacklogTab projectId={projectId} />}
         {activeTab === 'sprint' && <ActiveSprintTab />}
       </main>

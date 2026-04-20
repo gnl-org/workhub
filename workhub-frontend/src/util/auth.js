@@ -32,7 +32,6 @@ export const getUserInfo = () => {
       expiry: decoded.exp
     };
   } catch (error) {
-    console.error("Token decoding failed:", error);
     return null;
   }
 };

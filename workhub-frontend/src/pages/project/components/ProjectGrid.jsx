@@ -3,8 +3,22 @@ import ProjectCard from './ProjectCard';
 import { useNavigate } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 
-export default function ProjectGrid({ projects, isLoading }) {
+export default function ProjectGrid({ projects, isLoading, error, refresh }) {
   const navigate = useNavigate();
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center p-20 text-center">
+        <div className="text-red-500 mb-4 font-bold text-lg">⚠️ {error}</div>
+        <button 
+          onClick={refresh}
+          className="px-6 py-2 bg-indigo-600 text-white rounded-xl font-bold"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   if (!isLoading && projects.length === 0) {
     return (

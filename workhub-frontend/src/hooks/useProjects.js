@@ -5,19 +5,21 @@ import { getUserInfo } from '../util/auth';
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [members, setMembers] = useState([]);
   const [isMembersLoading, setIsMembersLoading] = useState(false);
 
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
+    setError(false);
     try {
       const user = getUserInfo();
       const endpoint = user?.role === 'ADMIN' ? '/projects' : '/projects/own';
       const res = await api.get(endpoint);
       setProjects(res.data);
     } catch (err) {
-      console.error("Fetch error:", err);
+      setError(err.response?.data?.message || "Failed to load projects. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -42,7 +44,9 @@ export const useProjects = () => {
     try {
       const res = await api.patch(`/projects/${id}`, formData);
       // Optional: Update local state if you're on the dashboard
+      console.log("Updated project:", res.data);
       setProjects(prev => prev.map(p => p.id === id ? res.data : p));
+      await api.patch(`/projects/${id}`, formData);
       return { success: true, data: res.data };
     } catch (err) {
       return { success: false, error: "Update failed" };
@@ -126,6 +130,7 @@ export const useProjects = () => {
     removeMemberFromProject,
     fetchMembers,
     members,
-    isMembersLoading
+    isMembersLoading,
+    error
   };
 };

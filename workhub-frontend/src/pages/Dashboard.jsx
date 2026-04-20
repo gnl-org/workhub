@@ -10,7 +10,7 @@ import Modal from '../components/Modal';
 
 export default function Dashboard() {
   const { isOpen, open, close } = useModal();
-  const { projects, isSubmitting, createProject, isLoading, refresh } = useProjects();
+  const { projects, isSubmitting, createProject, isLoading, refresh, error } = useProjects();
 
   useEffect(() => {
     refresh();
@@ -41,7 +41,7 @@ export default function Dashboard() {
       </header>
 
       {/* Grid handles its own loading state internally now if you pass isLoading */}
-      <ProjectGrid projects={projects} isLoading={isLoading} />
+      <ProjectGrid projects={projects} isLoading={isLoading} error={error} refresh={refresh} />
 
       <Modal 
         isOpen={isOpen} 

@@ -14,7 +14,6 @@ export default function Login() {
     setIsLoading(true);
     try {
       const res = await api.post('/api/v1/auth/authenticate', { email, password });
-      console.log("check login", res.data)
       localStorage.setItem('token', res.data.token);
       navigate('/');
     } catch (err) {
