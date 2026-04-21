@@ -64,6 +64,8 @@ export default function InfoTab({ project, updateProject: updateProjectLocal }) 
 
   if (!project) return null;
 
+  console.log("Project InfoTab Rendered with project:", project);
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       

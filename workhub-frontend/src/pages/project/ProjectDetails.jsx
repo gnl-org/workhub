@@ -10,7 +10,7 @@ import ActiveSprintTab from './ActiveSprintTab';
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
-  const [activeTab, setActiveTab] = useState('info');
+  const [activeTab, setActiveTab] = useState('backlog');
   const [project, setProject] = useState(null);
 
   useEffect(() => {
