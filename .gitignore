@@ -1,3 +1,9 @@
 # Docker data
 postgres_data/
 redis_data/
+
+# Environment files
+.env
+.env.local
+infra/.env.docker
+infra/.env.docker.local
