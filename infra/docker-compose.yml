@@ -13,9 +13,11 @@ services:
     env_file: .env.docker
 
   workhub-api:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    # build:
+    #   context: ../backend
+    #   dockerfile: Dockerfile
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-backend
+
     ports:
       - "8080:8080"
     environment:
