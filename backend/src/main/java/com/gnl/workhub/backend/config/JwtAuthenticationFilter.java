@@ -3,6 +3,7 @@ package com.gnl.workhub.backend.config;
 import com.gnl.workhub.backend.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -32,17 +34,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
 
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
+//        final String jwt;
+        String jwt = null;
         final String userEmail;
 
-        // 1. If Header is missing or doesn't start with `Bearer `, skip this filter
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
+//        // 1. If Header is missing or doesn't start with `Bearer `, skip this filter
+//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+//            filterChain.doFilter(request, response);
+//            return;
+//        }
+        // 1. Check if cookies exist in the request
+        if (request.getCookies() != null) {
+            // Find the cookie named "accessToken" that we set in the AuthenticationController
+            jwt = Arrays.stream(request.getCookies())
+                    .filter(cookie -> "accessToken".equals(cookie.getName()))
+                    .map(Cookie::getValue)
+                    .findFirst()
+                    .orElse(null);
         }
 
         // 2. Extract the token (starting after `Bearer `)
-        jwt = authHeader.substring(7);
+//        jwt = authHeader.substring(7);
+        // 2. If the cookie is completely missing, bypass this filter and let downstream security handle it
+        if (jwt == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
         userEmail = jwtService.extractUsername(jwt);
 
         // 3. If we have an email and user isn't already authenticated for this request
