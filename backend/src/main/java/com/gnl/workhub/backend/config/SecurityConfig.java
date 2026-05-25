@@ -14,6 +14,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -33,8 +36,18 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        // 1. Configure the Request Handler for Single Page Applications
+        CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
+        // Set the optional application nickname clause to deferred resolving
+        requestHandler.setCsrfRequestAttributeName("_csrf");
+
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for our stateless API
+                .csrf(csrf -> csrf
+                        // 2. Instruct Spring to write the token into a cookie named "XSRF-TOKEN"
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(requestHandler)
+                        .ignoringRequestMatchers("/api/v1/auth/**")
+                )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // No sessions!
@@ -62,7 +75,8 @@ public class SecurityConfig {
 
                         // Lock everything else
                         .anyRequest().authenticated()
-                );
+                )
+                .addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
 
         return http.build();
     }
