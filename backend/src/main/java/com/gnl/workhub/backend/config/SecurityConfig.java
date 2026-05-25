@@ -33,6 +33,7 @@ public class SecurityConfig {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final SecurityExceptionHandler securityExceptionHandler;
+    private final RateLimitingFilter rateLimitingFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -58,6 +59,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(securityExceptionHandler)
                 )
                 .authenticationProvider(authenticationProvider)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // 1. Public endpoints
