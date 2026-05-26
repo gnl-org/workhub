@@ -32,7 +32,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthResult authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
@@ -42,8 +42,27 @@ public class AuthenticationService {
         var user = repository.findByEmail(request.getEmail())
                 .orElseThrow();
         var jwtToken = jwtService.generateToken(user);
-        return AuthenticationResponse.builder()
+        AuthenticationResponse authResponse = AuthenticationResponse.builder()
                 .token(jwtToken)
+                .build();
+
+        UserResponse userResponse = UserResponse.builder()
+                .email(user.getEmail())
+                .role(user.getGlobalRole().name())
+                .fullName(user.getFullName())
+                .build();
+
+        return  new AuthResult(authResponse, userResponse);
+    }
+
+    public UserResponse getMe(String email) {
+        var user = repository.findByEmail(email)
+                .orElseThrow();
+
+        return UserResponse.builder()
+                .email(user.getEmail())
+                .role(user.getGlobalRole().name())
+                .fullName(user.getFullName())
                 .build();
     }
 }
