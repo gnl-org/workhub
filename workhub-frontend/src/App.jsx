@@ -4,41 +4,48 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
 import ProjectDetails from './pages/project/ProjectDetails';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import './index.css';
 
 // The guard component
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  // If no token, redirect to login
-  return token ? children : <Navigate to="/login" replace />;
+  const { isAuthenticated, loading } = useAuth();
+  if (loading) {
+    return <div className="loading-spinner">Loading authentication status...</div>;
+  }
+
+  // If backend says no cookie found, redirect to login
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
 };
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        {/* Protected Layout Route:
-          We wrap the MainLayout in PrivateRoute. 
-          This protects everything inside (Dashboard, ProjectDetails, etc.)
-        */}
-        <Route 
-          element={
-            <PrivateRoute>
-              <MainLayout />
-            </PrivateRoute>
-          }
-        >
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/projects/:projectId" element={<ProjectDetails />} />
-        </Route>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Protected Layout Route:
+            We wrap the MainLayout in PrivateRoute. 
+            This protects everything inside (Dashboard, ProjectDetails, etc.)
+          */}
+          <Route 
+            element={
+              <PrivateRoute>
+                <MainLayout />
+              </PrivateRoute>
+            }
+          >
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/projects/:projectId" element={<ProjectDetails />} />
+          </Route>
 
-        {/* Global Redirect */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+          {/* Global Redirect */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

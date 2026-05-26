@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Mail, Loader2, ArrowRight } from 'lucide-react';
 import api from '../../api/axios';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { setUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -14,7 +16,7 @@ export default function Login() {
     setIsLoading(true);
     try {
       const res = await api.post('/api/v1/auth/authenticate', { email, password });
-      localStorage.setItem('token', res.data.token);
+      setUser(res.data);
       navigate('/');
     } catch (err) {
       alert("Invalid credentials. Please try again.");

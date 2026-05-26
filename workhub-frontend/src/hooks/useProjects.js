@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
 import api from '../api/axios';
-import { getUserInfo } from '../util/auth';
+import { useAuth } from '../context/AuthContext';
 
 export const useProjects = () => {
+  const { user } = useAuth();
   const [projects, setProjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -14,7 +15,6 @@ export const useProjects = () => {
     setIsLoading(true);
     setError(false);
     try {
-      const user = getUserInfo();
       const endpoint = user?.role === 'ADMIN' ? '/projects' : '/projects/own';
       const res = await api.get(endpoint);
       setProjects(res.data);
@@ -44,7 +44,6 @@ export const useProjects = () => {
     try {
       const res = await api.patch(`/projects/${id}`, formData);
       // Optional: Update local state if you're on the dashboard
-      console.log("Updated project:", res.data);
       setProjects(prev => prev.map(p => p.id === id ? res.data : p));
       await api.patch(`/projects/${id}`, formData);
       return { success: true, data: res.data };
