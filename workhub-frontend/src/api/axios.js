@@ -26,13 +26,13 @@ api.interceptors.response.use(
   (error) => {
     // Check if the error is a 401 Unauthorized (standard for expired/invalid JWT)
     if (error.response && error.response.status === 401) {
-      console.warn("Session expired or unauthorized. Logging out...");
-      
-      localStorage.removeItem('token');
-      
-      // Redirect to login. window.location.href is used here because 
-      // this file is outside the React component tree (no access to useNavigate)
-      window.location.href = '/login';
+      // Only redirect if not already on login or register page
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/login' && currentPath !== '/register') {
+        console.warn("Session expired or unauthorized. Logging out...");
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

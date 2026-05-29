@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import api from '../api/axios';
 
 const AuthContext = createContext(null);
@@ -25,8 +25,14 @@ export const AuthProvider = ({ children }) => {
   // Compute authenticated status implicitly based on whether a user object exists
   const isAuthenticated = !!user;
 
+  // Memoize the context value to prevent unnecessary re-renders of consumers
+  const value = useMemo(
+    () => ({ user, setUser, isAuthenticated, loading }),
+    [user, isAuthenticated, loading]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, setUser, isAuthenticated, loading }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
