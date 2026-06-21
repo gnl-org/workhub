@@ -22,12 +22,23 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
+  const logout = async () => {
+    try {
+      await api.post('/api/v1/auth/logout');
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear user state even if logout endpoint fails
+      setUser(null);
+    }
+  };
+
   // Compute authenticated status implicitly based on whether a user object exists
   const isAuthenticated = !!user;
 
   // Memoize the context value to prevent unnecessary re-renders of consumers
   const value = useMemo(
-    () => ({ user, setUser, isAuthenticated, loading }),
+    () => ({ user, setUser, isAuthenticated, loading, logout }),
     [user, isAuthenticated, loading]
   );
 

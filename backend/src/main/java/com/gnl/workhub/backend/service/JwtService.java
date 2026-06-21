@@ -21,7 +21,10 @@ public class JwtService {
     @Value("${app.jwt.expiration}")
     private long jwtExpiration;
 
-    // 1. Generate a Token (The "Printing Press")
+    @Value("${app.jwt.refresh-expiration}")
+    private long refreshTokenExpiration;
+
+    // 1. Generate Access Token (Short-lived - 15 minutes)
     public String generateToken(UserDetails userDetails) {
         var user = (com.gnl.workhub.backend.entity.User) userDetails;
 
@@ -35,15 +38,34 @@ public class JwtService {
                 .compact();
     }
 
-    // 2. Extract the Username from the Token
+    // 2. Generate Refresh Token (Long-lived - 24 hours)
+    public String generateRefreshToken(UserDetails userDetails) {
+        return Jwts.builder()
+                .subject(userDetails.getUsername())
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(getSignInKey())
+                .compact();
+    }
+
+    // 3. Extract the Username from the Token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 3. Validate the Token (The "Guard's Check")
+    // 4. Validate the Access Token
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+    }
+
+    // 5. Validate Refresh Token (only checks expiration, no user comparison needed)
+    public boolean isRefreshTokenValid(String token) {
+        try {
+            return !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private boolean isTokenExpired(String token) {
