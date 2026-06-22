@@ -30,3 +30,33 @@ docker exec -it projecthub-db psql -U devuser -d projecthub -c "\conninfo"
 docker-compose --env-file .env.docker down   
 ```
 
+### Guide: Setting Up and Using VisualVM for Spring Boot
+
+This documentation provides a quick reference for setting up and using **VisualVM** to profile your Spring Boot application locally, covering both the **Command Line Interface (CLI)** and the **IntelliJ IDEA Configuration** methods.
+
+---
+
+#### 1. Prerequisites & Installation
+
+VisualVM requires a Java Development Kit (JDK) installed on your machine to monitor applications.
+
+To install VisualVM on macOS via Homebrew:
+```bash
+brew install --cask visualvm
+```
+
+#### 2. configuration methods
+2.1 CLI - 
+```bash
+./mvnw spring-boot:run \
+  -Dspring-boot.run.profiles=dev \
+  -Dspring-boot.run.jvmArguments="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+```
+2.2 IntelliJ
+Edit Configurations > VM Options > paste below JMX properties
+```bash
+-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false
+```
+
+#### 3. Connect VisualVM to spring boot app
+
