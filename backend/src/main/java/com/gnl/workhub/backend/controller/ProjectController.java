@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -17,8 +18,16 @@ public class ProjectController {
     private final ProjectService projectService;
     private final ProjectMemberService projectMemberService;
 
+    // Inside your ProjectController class, add this static list:
+    // private static final List<byte[]> leakedDataHolder = new ArrayList<>();
+
     @GetMapping
     public List<ProjectResponse> getProjects() {
+        // INTENTIONAL MEMORY LEAK LAB:
+        // Every single HTTP request simulates allocating roughly 1MB of memory overhead
+        // byte[] simulatedPayloadData = new byte[1024 * 1024];
+        // leakedDataHolder.add(simulatedPayloadData);
+
         return projectService.getAllProjects();
     }
 
