@@ -18,6 +18,8 @@ import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -52,6 +54,11 @@ public class ProjectService {
     // --- SERVICE METHODS ---
 
     @PreAuthorize("hasRole('ADMIN')")
+    @Cacheable(
+            value = "projects",
+            key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName()",
+            sync = true
+    )
     public List<ProjectResponse> getAllProjects() {
         return toResponseList(projectRepository.findAll());
     }
@@ -65,6 +72,7 @@ public class ProjectService {
     }
 
     @Transactional
+    @CacheEvict(value = "projects", allEntries = true)
     public ProjectResponse createProject(ProjectRequest request) {
         User currentUser = getCurrentUser();
 
@@ -86,6 +94,7 @@ public class ProjectService {
     }
 
     @Transactional
+    @CacheEvict(value = "projects", allEntries = true)
     public ProjectResponse updateProject(UUID projectId, UpdateProjectRequest request) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));

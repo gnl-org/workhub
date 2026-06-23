@@ -30,11 +30,11 @@ services:
       - postgres
     env_file: .env.docker
 
-  # redis:
-  #   image: redis:7-alpine
-  #   container_name: projecthub-cache
-  #   ports:
-  #     - "6379:6379"
+  redis:
+    image: redis:7-alpine
+    container_name: projecthub-cache
+    ports:
+      - "6379:6379"
 
   # rabbitmq:
   #   image: rabbitmq:3-management-alpine
