@@ -29,6 +29,11 @@ Add the following parameters to your Run Configuration to unlock real-time telem
 
 Evaluate system health using these three terminal data points from your ApacheBench summary:
 
+```bash
+ab -n 5000 -c 20 -H "Cookie: accessToken=JWT_TOKEN" http://localhost:8080/projects
+
+```
+
 * **Failed Requests:** Must be **0**. Non-zero values indicate application crashes.
 * **Requests per second:** Higher is better. Measures raw system throughput capacity.
 * **100% (Tail Latency):** Lower is better. The absolute slowest request execution time.
