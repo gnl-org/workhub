@@ -5,6 +5,8 @@ import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -18,16 +20,23 @@ import java.util.UUID;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificationExecutor<Task> {
+    // ⚡ OVERRIDE the findAll specification executor to join your associations
+    @Override
+    @EntityGraph(attributePaths = {"assignedTo", "owner", "project"})
+    Page<Task> findAll(Specification<Task> spec, Pageable pageable);
+
     // Find all tasks in a project
     List<Task> findByProjectId(UUID projectId);
-    
+
     // Find all tasks assigned to a user
     List<Task> findByAssignedToId(UUID assignedToId);
-    
+
     // Find all tasks assigned to a user in a specific project
     @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.assignedTo.id = :userId")
     List<Task> findByProjectIdAndAssignedToId(@Param("projectId") UUID projectId, @Param("userId") UUID userId);
 
+    // ⚡ OPTIMIZED: The EntityGraph collapses your N+1 select loop into a single step
+    @EntityGraph(attributePaths = {"assignedTo", "owner", "project"})
     @Query("SELECT t FROM Task t WHERE t.project.id = :projectId " +
             "AND t.deleted = false " +
             "AND (:status IS NULL OR t.status = :status) " +

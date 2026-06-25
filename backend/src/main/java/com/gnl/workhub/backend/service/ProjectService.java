@@ -60,7 +60,8 @@ public class ProjectService {
             sync = true
     )
     public List<ProjectResponse> getAllProjects() {
-        return toResponseList(projectRepository.findAll());
+//        return toResponseList(projectRepository.findAll());
+        return toResponseList(projectRepository.findAllWithOwners());
     }
 
     public ProjectResponse getProjectById(UUID id) {
