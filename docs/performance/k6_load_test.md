@@ -1,5 +1,3 @@
-### ⚡ Quick Revision Guide: K6 API Load Testing
-
 #### 1. What is K6?
 
 Grafana K6 is a developer-centric, open-source load testing tool used to simulate concurrent users (VUs) hitting your application endpoints to measure performance, throughput, and reliability under stress. Scripts are written in **JavaScript**.
