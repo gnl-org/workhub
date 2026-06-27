@@ -196,6 +196,12 @@ public class TaskService {
 
         task.setWorkStage(targetStage);
 
+        if (targetStage.getSprint() != null) {
+            task.setSprint(targetStage.getSprint());
+        } else {
+            task.setSprint(null);
+        }
+
         if (request.getSortOrder() != null) {
             task.setSortOrder(request.getSortOrder());
         } else {

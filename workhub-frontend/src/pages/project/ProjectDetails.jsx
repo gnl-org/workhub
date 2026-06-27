@@ -58,7 +58,7 @@ export default function ProjectDetails() {
       <main className="flex-1 bg-slate-50/50">
         {activeTab === 'info' && <InfoTab projectId={projectId} project={project} updateProject={setProject} />}
         {activeTab === 'backlog' && <BacklogTab projectId={projectId} />}
-        {activeTab === 'sprint' && <ActiveSprintTab />}
+        {activeTab === 'sprint' && <ActiveSprintTab projectId={projectId} />}
         {activeTab === 'history' && <SprintHistoryTab projectId={projectId} />}
       </main>
     </div>

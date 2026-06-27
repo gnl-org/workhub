@@ -6,7 +6,7 @@ export default function StageSection({ stage, tasks, stages, onRename, onDelete,
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
       <StageHeader
         stage={stage}
         taskCount={tasks.length}

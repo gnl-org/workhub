@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -26,6 +27,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final ProjectMemberRepository projectMemberRepository;
     private final WorkStageService workStageService;
     private final WorkStageRepository workStageRepository;
+    private final SprintRepository sprintRepository;
     private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker();
 
@@ -116,6 +118,34 @@ public class DatabaseSeeder implements CommandLineRunner {
             taskRepository.save(task);
         }
 
+        // 5. Create 1 planned sprint per project with some tasks assigned
+        for (Project project : projects) {
+            Sprint sprint = new Sprint();
+            sprint.setProject(project);
+            sprint.setName("Sprint " + (faker.random().nextInt(1, 5)));
+            sprint.setGoal(faker.lorem().sentence());
+            sprint.setStatus(SprintStatus.PLANNED);
+            sprint.setStartDate(LocalDate.now().minusDays(faker.random().nextInt(1, 10)));
+            sprint.setEndDate(LocalDate.now().plusDays(faker.random().nextInt(10, 20)));
+            Sprint savedSprint = sprintRepository.save(sprint);
+
+            WorkStage sprintStage = workStageService.createSprintStage(project, savedSprint);
+
+            List<Task> projectTasks = taskRepository.findByProjectId(project.getId()).stream()
+                    .filter(t -> !t.isDeleted())
+                    .limit(10)
+                    .toList();
+
+            for (int i = 0; i < projectTasks.size(); i++) {
+                Task task = projectTasks.get(i);
+                task.setSprint(savedSprint);
+                task.setWorkStage(sprintStage);
+                task.setSortOrder(i);
+            }
+            taskRepository.saveAll(projectTasks);
+        }
+
+        System.out.println("✅ Seeded " + projects.size() + " sprints with tasks!");
         System.out.println("✅ Successfully seeded 300 tasks with valid memberships!");
     }
 

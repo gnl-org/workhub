@@ -5,6 +5,7 @@ import com.gnl.workhub.backend.dto.UpdateWorkStageRequest;
 import com.gnl.workhub.backend.dto.WorkStageResponse;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.ProjectMember;
+import com.gnl.workhub.backend.entity.Sprint;
 import com.gnl.workhub.backend.entity.Task;
 import com.gnl.workhub.backend.entity.User;
 import com.gnl.workhub.backend.entity.WorkStage;
@@ -139,6 +140,20 @@ public class WorkStageService {
                 workStageRepository.save(stage);
             }
         }
+    }
+
+    @Transactional
+    public WorkStage createSprintStage(Project project, Sprint sprint) {
+        WorkStage stage = new WorkStage();
+        stage.setProject(project);
+        stage.setSprint(sprint);
+        stage.setName(sprint.getName());
+        int maxSort = workStageRepository.findByProjectIdOrderBySortOrderAsc(project.getId()).stream()
+                .mapToInt(WorkStage::getSortOrder)
+                .max()
+                .orElse(-1);
+        stage.setSortOrder(maxSort + 1);
+        return workStageRepository.save(stage);
     }
 
     public WorkStage getDefaultBacklogStage(UUID projectId) {
