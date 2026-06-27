@@ -1,21 +1,34 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Plus, AlertCircle } from 'lucide-react';
+import { Plus, AlertCircle, GripVertical } from 'lucide-react';
 import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useBacklog } from '../../hooks/useBacklog';
 import { useWorkStages } from '../../hooks/useWorkStages';
 import { useTasks } from '../../hooks/useTasks';
 import StageSection from '../../components/backlog/StageSection';
+import StageInsertionPoint from '../../components/backlog/StageInsertionPoint';
 import CreateStageModal from '../../components/backlog/CreateStageModal';
 import CreateTaskModal from '../../components/backlog/CreateTaskModal';
 
+const sortStages = (stages) =>
+  [...stages].sort((a, b) => {
+    const rank = (s) => {
+      if (s.sprintStatus === 'ACTIVE') return 0;
+      if (s.sprintStatus === 'PLANNED') return 1;
+      return 2 + (s.sortOrder ?? 0);
+    };
+    return rank(a) - rank(b);
+  });
+
 export default function BacklogTab({ projectId }) {
   const { backlog, isLoading, error, fetchBacklog, moveTask } = useBacklog(projectId);
-  const { stages, fetchStages, createStage, renameStage, deleteStage } = useWorkStages(projectId);
+  const { createStage, renameStage, deleteStage, reorderStages } = useWorkStages(projectId);
   const { createTask } = useTasks(projectId);
 
   const [showCreateStage, setShowCreateStage] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [activeTask, setActiveTask] = useState(null);
+  const [activeStage, setActiveStage] = useState(null);
+  const [activeType, setActiveType] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -23,8 +36,7 @@ export default function BacklogTab({ projectId }) {
 
   const loadData = useCallback(() => {
     fetchBacklog();
-    fetchStages();
-  }, [fetchBacklog, fetchStages]);
+  }, [fetchBacklog]);
 
   useEffect(() => {
     loadData();
@@ -71,6 +83,12 @@ export default function BacklogTab({ projectId }) {
   };
 
   const handleDragStart = (event) => {
+    const data = event.active.data?.current;
+    setActiveType(data?.type);
+    if (data?.type === 'stage-drag') {
+      const stage = (backlog.stages || []).find(s => s.id === data.stageId);
+      if (stage) { setActiveStage(stage); return; }
+    }
     const allStages = backlog.stages || [];
     for (const stage of allStages) {
       const task = (stage.tasks || []).find(t => t.id === event.active.id);
@@ -78,10 +96,53 @@ export default function BacklogTab({ projectId }) {
     }
   };
 
-  const handleDragEnd = (event) => {
+  const handleDragEnd = async (event) => {
+    const data = event.active.data?.current;
     setActiveTask(null);
+    setActiveStage(null);
+    setActiveType(null);
     const { active, over } = event;
     if (!over) return;
+
+    if (data?.type === 'stage-drag') {
+      const draggedStageId = data.stageId;
+      const overType = over.data?.current?.type;
+
+      if (overType === 'insertion') {
+        const insertIdx = over.data?.current?.index;
+        const sortedStages = sortStages(backlog.stages || []);
+        const fromIdx = sortedStages.findIndex(s => s.id === draggedStageId);
+        if (fromIdx === -1) return;
+
+        const newOrder = [...sortedStages];
+        const [moved] = newOrder.splice(fromIdx, 1);
+        newOrder.splice(insertIdx, 0, moved);
+
+        const result = await reorderStages(newOrder.map(s => s.id));
+        if (result.success) {
+          fetchBacklog();
+        }
+        return;
+      }
+
+      let targetStageId = overType === 'stage' ? over.id : null;
+      if (!targetStageId || targetStageId === draggedStageId) return;
+
+      const sortedStages = sortStages(backlog.stages || []);
+      const fromIdx = sortedStages.findIndex(s => s.id === draggedStageId);
+      const toIdx = sortedStages.findIndex(s => s.id === targetStageId);
+      if (fromIdx === -1 || toIdx === -1) return;
+
+      const newOrder = [...sortedStages];
+      const [moved] = newOrder.splice(fromIdx, 1);
+      newOrder.splice(toIdx, 0, moved);
+
+      const result = await reorderStages(newOrder.map(s => s.id));
+      if (result.success) {
+        fetchBacklog();
+      }
+      return;
+    }
 
     const task = (backlog.stages || []).flatMap(s => s.tasks || []).find(t => t.id === active.id);
     if (!task) return;
@@ -89,7 +150,6 @@ export default function BacklogTab({ projectId }) {
     let targetStageId = over.data?.current?.type === 'stage' ? over.id : null;
 
     if (!targetStageId) {
-      // Dropped on another task — find its stage
       for (const stage of backlog.stages) {
         if ((stage.tasks || []).some(t => t.id === over.id)) {
           targetStageId = stage.id;
@@ -104,6 +164,8 @@ export default function BacklogTab({ projectId }) {
   };
 
   const allTasks = (backlog.stages || []).flatMap(s => s.tasks || []);
+  const sortedStages = sortStages(backlog.stages || []);
+  const isStageDragging = activeType === 'stage-drag';
 
   if (isLoading && backlog.stages.length === 0) {
     return (
@@ -149,8 +211,8 @@ export default function BacklogTab({ projectId }) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="space-y-4">
-          {backlog.stages.length === 0 ? (
+        <div className="space-y-0">
+          {sortedStages.length === 0 ? (
             <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm py-24 text-center">
               <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <AlertCircle size={32} />
@@ -159,29 +221,35 @@ export default function BacklogTab({ projectId }) {
               <p className="text-slate-400 text-sm mt-1">Create a stage to organize your work.</p>
             </div>
           ) : (
-            [...backlog.stages].sort((a, b) => {
-              const rank = (s) => {
-                if (s.sprintStatus === 'ACTIVE') return 0;
-                if (s.sprintStatus === 'PLANNED') return 1;
-                return 2 + s.sortOrder;
-              };
-              return rank(a) - rank(b);
-            }).map(stage => (
-              <StageSection
-                key={stage.id}
-                stage={stage}
-                tasks={stage.tasks || []}
-                stages={backlog.stages}
-                onRename={() => handleRenameStage(stage)}
-                onDelete={() => handleDeleteStage(stage)}
-                onMoveTask={handleMoveTask}
-              />
-            ))
+            <>
+              <StageInsertionPoint index={0} show={isStageDragging} />
+              {sortedStages.map((stage, i) => (
+                <React.Fragment key={stage.id}>
+                  <StageSection
+                    stage={stage}
+                    tasks={stage.tasks || []}
+                    stages={backlog.stages}
+                    onRename={() => handleRenameStage(stage)}
+                    onDelete={() => handleDeleteStage(stage)}
+                    onMoveTask={handleMoveTask}
+                  />
+                  <StageInsertionPoint index={i + 1} show={isStageDragging} />
+                </React.Fragment>
+              ))}
+            </>
           )}
         </div>
 
         <DragOverlay>
-          {activeTask ? (
+          {activeStage ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl shadow-lg border border-indigo-300 rotate-1 opacity-90">
+              <GripVertical size={16} className="text-slate-400" />
+              <p className="text-sm font-bold text-slate-700">{activeStage.name}</p>
+              <span className="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-0.5 rounded-full">
+                {(backlog.stages || []).find(s => s.id === activeStage.id)?.tasks?.length || 0}
+              </span>
+            </div>
+          ) : activeTask ? (
             <div className="bg-white p-3 rounded-xl shadow-lg border border-indigo-300 rotate-2 opacity-90 flex items-center gap-3">
               <p className="text-sm font-bold text-slate-700">{activeTask.title}</p>
             </div>

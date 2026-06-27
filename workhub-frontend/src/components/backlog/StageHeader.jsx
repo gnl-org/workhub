@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, GripVertical, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
 
 export default function StageHeader({ stage, taskCount, onRename, onDelete, isCollapsed, onToggleCollapse }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `stage:${stage.id}`,
+    data: { type: 'stage-drag', stageId: stage.id },
+  });
+
   const isDefault = ['Backlog', 'Ready for Refinement', 'Ready for Sprint'].includes(stage.name);
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100 rounded-t-xl group">
-      <div className="flex items-center gap-3 flex-1">
+    <div className={`flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100 rounded-t-xl group ${isDragging ? 'opacity-50' : ''}`}>
+      <div className="flex items-center gap-1 flex-1">
+        <button ref={setNodeRef} {...listeners} {...attributes} className="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition cursor-grab active:cursor-grabbing touch-none">
+          <GripVertical size={16} />
+        </button>
         <button onClick={onToggleCollapse} className="text-slate-400 hover:text-slate-600 transition">
           {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
         </button>
