@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: 'http://localhost:8080',
   // baseURL: 'http://13.61.5.136:8080',
   withCredentials: true, // Tells Axios to include the HttpOnly cookie automatically
-
+  withXSRFToken: true,
   // Axios will automatically read this cookie name...
   xsrfCookieName: 'XSRF-TOKEN',
   // ...and inject its text value into this HTTP header name on every mutable request
