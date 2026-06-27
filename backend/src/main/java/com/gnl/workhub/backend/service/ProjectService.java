@@ -37,6 +37,7 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
     private final TaskRepository taskRepository;
+    private final WorkStageService workStageService;
 
     // --- HELPER METHODS ---
     private User getCurrentUser() {
@@ -86,6 +87,8 @@ public class ProjectService {
         ownerMember.setProjectRole(ProjectRole.OWNER); // Or your specific Enum value
 
         projectMemberRepository.save(ownerMember);
+
+        workStageService.seedDefaultStages(savedProject);
 
         return projectMapper.toResponse(savedProject);
     }

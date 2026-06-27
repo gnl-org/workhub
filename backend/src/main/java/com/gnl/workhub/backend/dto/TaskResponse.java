@@ -20,4 +20,8 @@ public class TaskResponse {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UUID owner;
+    private UUID workStageId;
+    private UUID sprintId;
+    private int sortOrder;
+    private boolean inActiveSprint;
 }

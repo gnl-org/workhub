@@ -16,5 +16,6 @@ public class TaskRequest {
     private TaskStatus status;
     private TaskPriority priority;
     private LocalDateTime dueDate;
+    private UUID workStageId;
 }
 

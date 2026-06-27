@@ -2,15 +2,22 @@
 erDiagram
     USER ||--o{ PROJECT : "owns"
     USER ||--o{ PROJECT_MEMBER : "is part of"
-    PROJECT ||--o{ PROJECT_MEMBER : "has"
-    PROJECT ||--o{ TASK : "contains"
     USER ||--o{ TASK : "is responsible for (owner)"
     USER ||--o{ TASK : "is assigned to (assigned_to)"
-    PROJECT ||--o{ ACTIVITY_LOG : "has"
-    
-    %% New Relationships
-    TASK ||--o{ TASK_COMMENT : "has"
     USER ||--o{ TASK_COMMENT : "authored"
+    
+    PROJECT ||--o{ PROJECT_MEMBER : "has"
+    PROJECT ||--o{ TASK : "contains"
+    PROJECT ||--o{ WORK_STAGE : "has stages"
+    PROJECT ||--o{ SPRINT : "has sprints"
+    PROJECT ||--o{ ACTIVITY_LOG : "has"
+
+    SPRINT ||--o{ WORK_STAGE : "linked stage"
+    SPRINT ||--o{ TASK : "contains"
+
+    WORK_STAGE ||--o{ TASK : "contains"
+    
+    TASK ||--o{ TASK_COMMENT : "has"
 
     USER {
         uuid id PK
@@ -40,16 +47,46 @@ erDiagram
         timestamp created_at
     }
 
+    WORK_STAGE {
+        uuid id PK
+        uuid project_id FK
+        uuid sprint_id FK "nullable"
+        string name
+        int sort_order
+        string created_by
+        timestamp created_at
+        string updated_by
+        timestamp updated_at
+    }
+
+    SPRINT {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string goal
+        string status "PLANNED | ACTIVE | CLOSED"
+        date start_date
+        date end_date
+        timestamp closed_at "nullable"
+        string created_by
+        timestamp created_at
+        string updated_by
+        timestamp updated_at
+    }
+
     TASK {
         uuid id PK
         uuid project_id FK
         uuid owner FK
         uuid assigned_to FK
+        uuid work_stage_id FK "Phase 1"
+        uuid sprint_id FK "Phase 1"
         string title
         string description
         string status
         string priority
         timestamp due_date
+        int sort_order "Phase 1"
         boolean deleted
         string created_by
         timestamp created_at
@@ -73,6 +110,7 @@ erDiagram
         string action
         uuid project_id FK
         uuid user_id FK
+        uuid task_id FK
         timestamp timestamp
     }
 ```

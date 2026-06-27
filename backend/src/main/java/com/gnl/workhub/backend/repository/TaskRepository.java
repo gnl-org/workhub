@@ -20,9 +20,9 @@ import java.util.UUID;
 
 @Repository
 public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificationExecutor<Task> {
-    // ⚡ OVERRIDE the findAll specification executor to join your associations
+    // OVERRIDE the findAll specification executor to join your associations
     @Override
-    @EntityGraph(attributePaths = {"assignedTo", "owner", "project"})
+    @EntityGraph(attributePaths = {"assignedTo", "owner", "project", "workStage", "sprint"})
     Page<Task> findAll(Specification<Task> spec, Pageable pageable);
 
     // Find all tasks in a project
@@ -65,6 +65,16 @@ public interface TaskRepository extends JpaRepository<Task, UUID>, JpaSpecificat
     List<Object[]> countTasksByStatus(UUID projectId);
 
     @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId " +
-            "AND t.dueDate < CURRENT_TIMESTAMP AND t.status != 'DONE'")
+            "AND t.dueDate < CURRENT_TIMESTAMP AND t.status != 'COMPLETED'")
     long countOverdueTasks(UUID projectId);
+
+    @EntityGraph(attributePaths = {"assignedTo", "owner", "project", "workStage", "sprint"})
+    List<Task> findByWorkStageIdAndDeletedFalseOrderBySortOrderAsc(UUID workStageId);
+
+    List<Task> findBySprintIdAndDeletedFalse(UUID sprintId);
+
+    long countBySprintIdAndStatusNotIn(UUID sprintId, List<TaskStatus> statuses);
+
+    @Query("SELECT MAX(t.sortOrder) FROM Task t WHERE t.workStage.id = :workStageId")
+    Optional<Integer> findMaxSortOrderByWorkStageId(@Param("workStageId") UUID workStageId);
 }

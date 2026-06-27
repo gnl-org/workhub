@@ -1,20 +1,15 @@
 package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.dto.*;
-import com.gnl.workhub.backend.entity.Project;
-import com.gnl.workhub.backend.entity.ProjectMember;
-import com.gnl.workhub.backend.entity.Task;
-import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.entity.*;
+import com.gnl.workhub.backend.enums.SprintStatus;
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
 import com.gnl.workhub.backend.enums.UserRole;
 import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.TaskDetailsMapper;
 import com.gnl.workhub.backend.mapper.TaskMapper;
-import com.gnl.workhub.backend.repository.ProjectMemberRepository;
-import com.gnl.workhub.backend.repository.ProjectRepository;
-import com.gnl.workhub.backend.repository.TaskRepository;
-import com.gnl.workhub.backend.repository.UserRepository;
+import com.gnl.workhub.backend.repository.*;
 import com.gnl.workhub.backend.specification.TaskSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +36,8 @@ public class TaskService {
     private final TaskDetailsMapper taskDetailsMapper;
     private final ProjectMemberRepository projectMemberRepository;
     private final ActivityLogService activityLogService;
+    private final WorkStageService workStageService;
+    private final WorkStageRepository workStageRepository;
 
     @Transactional
     public TaskResponse createTask(UUID projectId, TaskRequest request) {
@@ -60,8 +58,18 @@ public class TaskService {
             validateAssigneeMembership(project, assignee);
         }
 
-        // 4. Save
+        // 4. Set default work stage if not specified
         Task task = taskMapper.toEntity(request, project, assignee, currentUser);
+        if (task.getWorkStage() == null) {
+            WorkStage backlogStage = workStageService.getDefaultBacklogStage(projectId);
+            task.setWorkStage(backlogStage);
+        }
+
+        // 5. Set sort_order to max+1 in the stage
+        int maxSort = taskRepository.findMaxSortOrderByWorkStageId(task.getWorkStage().getId())
+                .orElse(-1);
+        task.setSortOrder(maxSort + 1);
+
         return taskMapper.toResponse(taskRepository.save(task));
     }
 
@@ -132,6 +140,92 @@ public class TaskService {
 
         // 3. Map the Page of entities to a Page of Responses
         return tasks.map(taskMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public BacklogResponse getBacklog(UUID projectId) {
+        validateProjectAccess(projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), getCurrentUser());
+
+        List<WorkStage> stages = workStageRepository.findByProjectIdOrderBySortOrderAsc(projectId);
+        BacklogResponse response = new BacklogResponse();
+        List<BacklogStageDto> stageDtos = new ArrayList<>();
+
+        for (WorkStage stage : stages) {
+            if (!workStageService.isStageVisible(stage)) continue;
+
+            BacklogStageDto stageDto = new BacklogStageDto();
+            stageDto.setId(stage.getId());
+            stageDto.setName(stage.getName());
+            stageDto.setSortOrder(stage.getSortOrder());
+
+            if (stage.getSprint() != null) {
+                stageDto.setSprintId(stage.getSprint().getId());
+                stageDto.setSprintStatus(stage.getSprint().getStatus());
+            }
+
+            List<Task> tasks = taskRepository.findByWorkStageIdAndDeletedFalseOrderBySortOrderAsc(stage.getId());
+            // Filter out tasks on closed sprints
+            List<TaskResponse> taskResponses = tasks.stream()
+                    .filter(t -> t.getSprint() == null || t.getSprint().getStatus() != SprintStatus.CLOSED)
+                    .map(taskMapper::toResponse)
+                    .toList();
+
+            stageDto.setTasks(taskResponses);
+            stageDtos.add(stageDto);
+        }
+
+        response.setStages(stageDtos);
+        return response;
+    }
+
+    @Transactional
+    public TaskResponse moveTask(UUID projectId, UUID taskId, MoveTaskRequest request) {
+        Task task = getValidatedTask(projectId, taskId);
+        User currentUser = getCurrentUser();
+        validateTaskAccess(task, currentUser);
+
+        WorkStage targetStage = workStageRepository.findById(request.getWorkStageId())
+                .orElseThrow(() -> new ResourceNotFoundException("Work stage not found"));
+
+        if (!targetStage.getProject().getId().equals(projectId)) {
+            throw new IllegalArgumentException("Work stage does not belong to this project");
+        }
+
+        Task oldState = task.toBuilder().build();
+
+        task.setWorkStage(targetStage);
+
+        if (request.getSortOrder() != null) {
+            task.setSortOrder(request.getSortOrder());
+        } else {
+            int maxSort = taskRepository.findMaxSortOrderByWorkStageId(targetStage.getId())
+                    .orElse(-1);
+            task.setSortOrder(maxSort + 1);
+        }
+
+        Task savedTask = taskRepository.save(task);
+        activityLogService.logTaskUpdate(oldState, savedTask, currentUser);
+
+        return taskMapper.toResponse(savedTask);
+    }
+
+    @Transactional
+    public void reorderTasksInStage(UUID projectId, UUID stageId, ReorderTasksRequest request) {
+        validateProjectAccess(projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), getCurrentUser());
+
+        List<Task> tasks = taskRepository.findByWorkStageIdAndDeletedFalseOrderBySortOrderAsc(stageId);
+        Map<UUID, Task> taskMap = tasks.stream().collect(Collectors.toMap(Task::getId, t -> t));
+
+        for (int i = 0; i < request.getTaskIds().size(); i++) {
+            Task task = taskMap.get(request.getTaskIds().get(i));
+            if (task != null) {
+                task.setSortOrder(i);
+            }
+        }
+
+        taskRepository.saveAll(tasks);
     }
 
     // --- NEW HELPER FOR THE "SNEAKY USER" TEST ---

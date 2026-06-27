@@ -3,6 +3,7 @@ package com.gnl.workhub.backend.util;
 import com.gnl.workhub.backend.entity.*;
 import com.gnl.workhub.backend.enums.*;
 import com.gnl.workhub.backend.repository.*;
+import com.gnl.workhub.backend.service.WorkStageService;
 import lombok.RequiredArgsConstructor;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
@@ -22,7 +23,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
-    private final ProjectMemberRepository projectMemberRepository; // Added
+    private final ProjectMemberRepository projectMemberRepository;
+    private final WorkStageService workStageService;
+    private final WorkStageRepository workStageRepository;
     private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker();
 
@@ -57,6 +60,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
             // CRITICAL FIX: Save the project first so it gets a UUID!
             project = projectRepository.save(project);
+            workStageService.seedDefaultStages(project);
             projects.add(project);
 
             // Now it's safe to add the Owner as a member too (Best practice)
@@ -94,6 +98,9 @@ public class DatabaseSeeder implements CommandLineRunner {
             User creator = members.get(faker.random().nextInt(members.size())).getUser();
             User assignee = members.get(faker.random().nextInt(members.size())).getUser();
 
+            WorkStage backlogStage = workStageRepository.findDefaultBacklogStage(project.getId())
+                    .orElseThrow(() -> new RuntimeException("Backlog stage not found for project " + project.getId()));
+
             Task task = Task.builder()
                     .title(faker.job().title() + " #" + i)
                     .description(faker.lorem().paragraph())
@@ -102,6 +109,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                     .project(project)
                     .owner(creator)
                     .assignedTo(assignee)
+                    .workStage(backlogStage)
                     .dueDate(LocalDateTime.now().plusDays(faker.random().nextInt(1, 30)))
                     .build();
 

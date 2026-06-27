@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Info, ListTodo, Boxes, ChevronLeft } from 'lucide-react';
+import { Info, ListTodo, Boxes, Clock, ChevronLeft } from 'lucide-react';
 import api from '../../api/axios';
 
 // Tab Components
 import InfoTab from './InfoTab';
 import BacklogTab from './BacklogTab';
 import ActiveSprintTab from './ActiveSprintTab';
+import SprintHistoryTab from './SprintHistoryTab';
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
@@ -20,6 +21,7 @@ export default function ProjectDetails() {
   const tabs = [
     { id: 'backlog', label: 'Backlog', icon: ListTodo },
     { id: 'sprint', label: 'Active Sprint', icon: Boxes },
+    { id: 'history', label: 'Sprint History', icon: Clock },
     { id: 'info', label: 'Project Info', icon: Info },
   ];
 
@@ -57,6 +59,7 @@ export default function ProjectDetails() {
         {activeTab === 'info' && <InfoTab projectId={projectId} project={project} updateProject={setProject} />}
         {activeTab === 'backlog' && <BacklogTab projectId={projectId} />}
         {activeTab === 'sprint' && <ActiveSprintTab />}
+        {activeTab === 'history' && <SprintHistoryTab projectId={projectId} />}
       </main>
     </div>
   );

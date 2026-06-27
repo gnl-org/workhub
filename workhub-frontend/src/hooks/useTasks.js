@@ -40,7 +40,7 @@ export const useTasks = (projectId) => {
     setIsSubmitting(true);
     try {
       const res = await api.post(`/projects/${projectId}/tasks`, taskData);
-      setTasks(prev => [res.data, ...prev]);
+      setTasks(prev => [...prev, res.data]);
       return { success: true, data: res.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.message || "Task creation failed" };

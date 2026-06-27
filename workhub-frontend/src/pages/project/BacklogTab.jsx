@@ -1,28 +1,75 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Plus, AlertCircle } from 'lucide-react';
+import { useBacklog } from '../../hooks/useBacklog';
+import { useWorkStages } from '../../hooks/useWorkStages';
 import { useTasks } from '../../hooks/useTasks';
-import { Plus, CheckCircle2, AlertCircle, Clock, ChevronRight } from 'lucide-react';
+import StageSection from '../../components/backlog/StageSection';
+import CreateStageModal from '../../components/backlog/CreateStageModal';
+import CreateTaskModal from '../../components/backlog/CreateTaskModal';
 
 export default function BacklogTab({ projectId }) {
-  const { tasks, isLoading, error, fetchTasks } = useTasks(projectId);
+  const { backlog, isLoading, error, fetchBacklog, moveTask } = useBacklog(projectId);
+  const { stages, fetchStages, createStage, renameStage, deleteStage } = useWorkStages(projectId);
+  const { createTask } = useTasks(projectId);
+
+  const [showCreateStage, setShowCreateStage] = useState(false);
+  const [showCreateTask, setShowCreateTask] = useState(false);
+  const [renamingStage, setRenamingStage] = useState(null);
+
+  const loadData = useCallback(() => {
+    fetchBacklog();
+    fetchStages();
+  }, [fetchBacklog, fetchStages]);
 
   useEffect(() => {
-    fetchTasks({}, 0, 50);
-  }, [fetchTasks]);
+    loadData();
+  }, [loadData]);
 
-  const getPriorityStyle = (priority) => {
-    switch (priority) {
-      case 'CRITICAL': return 'bg-red-100 text-red-700 border-red-200';
-      case 'HIGH': return 'bg-orange-100 text-orange-700 border-orange-200';
-      case 'MEDIUM': return 'bg-blue-100 text-blue-700 border-blue-200';
-      default: return 'bg-slate-100 text-slate-600 border-slate-200';
+  const handleMoveTask = async (taskId, stageId) => {
+    const result = await moveTask(taskId, stageId);
+    if (result.success) {
+      fetchBacklog();
     }
   };
 
-  if (isLoading) {
+  const handleCreateStage = async (name) => {
+    const result = await createStage(name);
+    if (result.success) {
+      fetchBacklog();
+    }
+    return result;
+  };
+
+  const handleRenameStage = (stage) => {
+    const name = prompt('Rename stage:', stage.name);
+    if (name && name.trim() && name.trim() !== stage.name) {
+      renameStage(stage.id, name.trim()).then(r => {
+        if (r.success) fetchBacklog();
+      });
+    }
+  };
+
+  const handleDeleteStage = (stage) => {
+    if (confirm(`Delete "${stage.name}"? Tasks will be moved to Backlog.`)) {
+      deleteStage(stage.id).then(r => {
+        if (r.success) fetchBacklog();
+      });
+    }
+  };
+
+  const handleCreateTask = async (taskData) => {
+    const result = await createTask(taskData);
+    if (result.success) {
+      fetchBacklog();
+    }
+    return result;
+  };
+
+  if (isLoading && backlog.stages.length === 0) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4 space-y-4">
         {[1, 2, 3].map(i => (
-          <div key={i} className="h-20 bg-slate-100 rounded-2xl animate-pulse" />
+          <div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -33,11 +80,22 @@ export default function BacklogTab({ projectId }) {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-xl font-bold text-slate-900">Backlog</h3>
-          <p className="text-sm text-slate-500 font-medium">Manage project tasks and requirements</p>
+          <p className="text-sm text-slate-500 font-medium">Manage project work stages and tasks</p>
         </div>
-        <button className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-          <Plus size={18} /> New Task
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowCreateStage(true)}
+            className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all shadow-sm"
+          >
+            <Plus size={18} /> New Stage
+          </button>
+          <button
+            onClick={() => setShowCreateTask(true)}
+            className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+          >
+            <Plus size={18} /> New Task
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -46,54 +104,42 @@ export default function BacklogTab({ projectId }) {
         </div>
       )}
 
-      <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-        {tasks.length === 0 ? (
-          <div className="py-24 text-center">
+      <div className="space-y-4">
+        {backlog.stages.length === 0 ? (
+          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm py-24 text-center">
             <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <Clock size={32} />
+              <AlertCircle size={32} />
             </div>
-            <p className="text-slate-500 font-bold">Your backlog is empty</p>
-            <p className="text-slate-400 text-sm mt-1">Create a task to get the engine running.</p>
+            <p className="text-slate-500 font-bold">No stages yet</p>
+            <p className="text-slate-400 text-sm mt-1">Create a stage to organize your work.</p>
           </div>
         ) : (
-          <div className="divide-y divide-slate-50">
-            {tasks.map((task) => (
-              <div key={task.id} className="p-4 hover:bg-slate-50/50 transition-all flex items-center justify-between group cursor-pointer">
-                <div className="flex items-center gap-4 flex-1">
-                  <CheckCircle2 className={task.status === 'COMPLETED' ? 'text-emerald-500' : 'text-slate-200'} size={20} />
-                  
-                  <div className="flex flex-col">
-                    <h4 className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">
-                      {task.title}
-                    </h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                        {task.status.replace('_', ' ')}
-                      </span>
-                      <span className="w-1 h-1 rounded-full bg-slate-200" />
-                      <span className="text-[10px] font-medium text-slate-400">
-                        Updated {new Date(task.updatedAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <span className={`text-[9px] font-black px-2.5 py-1 rounded-lg border uppercase tracking-wider ${getPriorityStyle(task.priority)}`}>
-                    {task.priority}
-                  </span>
-
-                  <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-600 group-hover:border-indigo-100 transition-all" title={task.assigneeName}>
-                    {task.assigneeName ? task.assigneeName.substring(0, 2).toUpperCase() : '--'}
-                  </div>
-                  
-                  <ChevronRight size={16} className="text-slate-300 group-hover:text-indigo-400 transition-colors" />
-                </div>
-              </div>
-            ))}
-          </div>
+          backlog.stages.map(stage => (
+            <StageSection
+              key={stage.id}
+              stage={stage}
+              tasks={stage.tasks || []}
+              stages={backlog.stages}
+              onRename={() => handleRenameStage(stage)}
+              onDelete={() => handleDeleteStage(stage)}
+              onMoveTask={handleMoveTask}
+            />
+          ))
         )}
       </div>
+
+      <CreateStageModal
+        isOpen={showCreateStage}
+        onClose={() => setShowCreateStage(false)}
+        onCreate={handleCreateStage}
+      />
+
+      <CreateTaskModal
+        isOpen={showCreateTask}
+        onClose={() => setShowCreateTask(false)}
+        onCreate={handleCreateTask}
+        stages={backlog.stages}
+      />
     </div>
   );
 }

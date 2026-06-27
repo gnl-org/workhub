@@ -35,10 +35,12 @@ public class Task extends BaseEntity {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    private TaskStatus status;
+    @Builder.Default
+    private TaskStatus status = TaskStatus.OPEN;
 
     @Enumerated(EnumType.STRING)
-    private TaskPriority priority;
+    @Builder.Default
+    private TaskPriority priority = TaskPriority.MEDIUM;
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;
@@ -46,6 +48,18 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private boolean deleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "work_stage_id")
+    private WorkStage workStage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sprint_id")
+    private Sprint sprint;
+
+    @Column(name = "sort_order", nullable = false)
+    @Builder.Default
+    private int sortOrder = 0;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("createdAt DESC")

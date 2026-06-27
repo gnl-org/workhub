@@ -6,6 +6,8 @@ import com.gnl.workhub.backend.dto.UpdateTaskRequest;
 import com.gnl.workhub.backend.entity.Project;
 import com.gnl.workhub.backend.entity.Task;
 import com.gnl.workhub.backend.entity.User;
+import com.gnl.workhub.backend.entity.WorkStage;
+import com.gnl.workhub.backend.enums.SprintStatus;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -13,7 +15,7 @@ public class TaskMapper {
 
     // Map Request -> Entity
     public Task toEntity(TaskRequest request, Project project, User assignee, User creator) {
-        return Task.builder()
+        Task.TaskBuilder builder = Task.builder()
                 .title(request.getTitle())
                 .description(request.getDescription())
                 .project(project)
@@ -21,8 +23,15 @@ public class TaskMapper {
                 .owner(creator)
                 .status(request.getStatus())
                 .priority(request.getPriority())
-                .dueDate(request.getDueDate())
-                .build();
+                .dueDate(request.getDueDate());
+
+        if (request.getWorkStageId() != null) {
+            WorkStage ws = new WorkStage();
+            ws.setId(request.getWorkStageId());
+            builder.workStage(ws);
+        }
+
+        return builder.build();
     }
 
     // Partial update - Map UpdateRequest -> Entity (only update non-null fields)
@@ -59,6 +68,16 @@ public class TaskMapper {
         response.setUpdatedAt(task.getUpdatedAt());
         response.setOwner(task.getOwner().getId());
         response.setProjectTitle(task.getProject().getId());
+        response.setSortOrder(task.getSortOrder());
+
+        if (task.getWorkStage() != null) {
+            response.setWorkStageId(task.getWorkStage().getId());
+        }
+
+        if (task.getSprint() != null) {
+            response.setSprintId(task.getSprint().getId());
+            response.setInActiveSprint(task.getSprint().getStatus() == SprintStatus.ACTIVE);
+        }
 
         // Handle Assignee info for the "assigneeName" field
         if (task.getAssignedTo() != null) {
