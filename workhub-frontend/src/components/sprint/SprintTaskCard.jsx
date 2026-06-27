@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MoreHorizontal, ArrowRight } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
 
 const priorityColors = {
   HIGH: 'text-red-600',
@@ -16,22 +17,39 @@ const NEXT_STATUS = {
 export default function SprintTaskCard({ task, onStatusChange }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+    data: { status: task.status },
+  });
+
   const initials = task.assigneeName
     ? task.assigneeName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
     : '??';
 
   const nextStatus = NEXT_STATUS[task.status];
 
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 transition-colors group relative">
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`bg-white p-4 rounded-xl shadow-sm border transition-colors group relative ${
+        isDragging ? 'border-indigo-400 shadow-lg opacity-50' : 'border-slate-200 hover:border-indigo-300'
+      }`}
+    >
       <div className="flex justify-between items-start mb-2">
         <span className="text-[10px] font-mono text-slate-400 group-hover:text-indigo-500 font-bold transition">
           {task.title?.slice(0, 2).toUpperCase() || 'WH'}-{task.id?.toString().slice(0, 4)}
         </span>
         <div className="relative">
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
+            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-slate-100"
           >
             <MoreHorizontal size={14} className="text-slate-300 hover:text-slate-600" />
           </button>
@@ -39,7 +57,7 @@ export default function SprintTaskCard({ task, onStatusChange }) {
             <div className="absolute right-0 top-6 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[160px] z-20">
               {nextStatus && (
                 <button
-                  onClick={() => { onStatusChange(task.id, nextStatus); setMenuOpen(false); }}
+                  onClick={() => { onStatusChange?.(task.id, nextStatus); setMenuOpen(false); }}
                   className="flex items-center gap-2 w-full px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
                 >
                   <ArrowRight size={12} /> Move to {nextStatus.replace('_', ' ')}

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
 import SprintTaskCard from './SprintTaskCard';
 
 export default function KanbanColumn({ column, tasks = [], onStatusChange }) {
