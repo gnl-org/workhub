@@ -20,7 +20,7 @@ const sortStages = (stages) =>
   });
 
 export default function BacklogTab({ projectId }) {
-  const { backlog, isLoading, error, fetchBacklog, moveTask } = useBacklog(projectId);
+  const { backlog, isLoading, error, fetchBacklog, moveTaskOptimistic } = useBacklog(projectId);
   const { createStage, renameStage, deleteStage, reorderStages } = useWorkStages(projectId);
   const { createTask } = useTasks(projectId);
 
@@ -43,10 +43,7 @@ export default function BacklogTab({ projectId }) {
   }, [loadData]);
 
   const handleMoveTask = async (taskId, stageId) => {
-    const result = await moveTask(taskId, stageId);
-    if (result.success) {
-      fetchBacklog();
-    }
+    await moveTaskOptimistic(taskId, stageId);
   };
 
   const handleCreateStage = async (name) => {

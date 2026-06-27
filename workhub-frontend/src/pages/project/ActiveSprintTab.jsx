@@ -58,9 +58,20 @@ export default function ActiveSprintTab({ projectId }) {
   };
 
   const handleStatusChange = async (taskId, newStatus) => {
+    const prevTasks = [...tasks];
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
     const result = await updateTaskStatus(taskId, newStatus);
-    if (result.success) {
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    if (!result.success) {
+      setTasks(prevTasks);
+      const as = await fetchActiveSprint();
+      if (as) {
+        try {
+          const res = await api.get(`/projects/${projectId}/sprints/${as.id}`);
+          setTasks(res.data.tasks || []);
+        } catch (e) {
+          setTasks([]);
+        }
+      }
     }
   };
 

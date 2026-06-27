@@ -32,6 +32,37 @@ export const useBacklog = (projectId) => {
     }
   };
 
+  const moveTaskOptimistic = async (taskId, workStageId) => {
+    const prevStages = backlog.stages;
+
+    setBacklog(prev => {
+      const movedTask = prev.stages.flatMap(s => s.tasks || []).find(t => t.id === taskId);
+      if (!movedTask) return prev;
+
+      const removeFrom = (stages) => stages.map(s => ({
+        ...s,
+        tasks: (s.tasks || []).filter(t => t.id !== taskId)
+      }));
+
+      const addTo = (stages) => stages.map(s =>
+        s.id === workStageId
+          ? { ...s, tasks: [...(s.tasks || []), { ...movedTask, workStageId }] }
+          : s
+      );
+
+      return { ...prev, stages: addTo(removeFrom(prev.stages)) };
+    });
+
+    try {
+      await api.patch(`/projects/${projectId}/tasks/${taskId}/move`, { workStageId });
+      return { success: true };
+    } catch (err) {
+      setBacklog(prev => ({ ...prev, stages: prevStages }));
+      fetchBacklog();
+      return { success: false, error: err.response?.data?.message || 'Failed to move task' };
+    }
+  };
+
   const reorderTasks = async (stageId, taskIds) => {
     try {
       await api.put(`/projects/${projectId}/work-stages/${stageId}/tasks/reorder`, { taskIds });
@@ -41,5 +72,5 @@ export const useBacklog = (projectId) => {
     }
   };
 
-  return { backlog, isLoading, error, fetchBacklog, moveTask, reorderTasks };
+  return { backlog, isLoading, error, fetchBacklog, moveTask, moveTaskOptimistic, reorderTasks };
 };
