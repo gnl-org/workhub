@@ -24,7 +24,17 @@ public class TaskSpecifications {
                 predicates.add(cb.equal(root.get("status"), filters.status()));
             }
 
-            // 3. Dynamic Search (Title OR Description)
+            // 3. Dynamic Priority
+            if (filters.priority() != null) {
+                predicates.add(cb.equal(root.get("priority"), filters.priority()));
+            }
+
+            // 4. Dynamic Assignee
+            if (filters.assigneeId() != null) {
+                predicates.add(cb.equal(root.get("assignedTo").get("id"), filters.assigneeId()));
+            }
+
+            // 5. Dynamic Search (Title OR Description)
             if (filters.search() != null && !filters.search().isBlank()) {
                 String pattern = "%" + filters.search().toLowerCase() + "%";
                 predicates.add(cb.or(
@@ -33,7 +43,7 @@ public class TaskSpecifications {
                 ));
             }
 
-            // 4. Date Range
+            // 6. Date Range
             if (filters.start() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("dueDate"), filters.start()));
             }
