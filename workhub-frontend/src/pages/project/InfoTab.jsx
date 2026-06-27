@@ -82,14 +82,12 @@ export default function InfoTab({ project, updateProject: updateProjectLocal }) 
       />
 
       <Modal isOpen={editModal.isOpen} onClose={editModal.close} title="Edit Project Details">
-        <div className="p-1">
-          <ProjectForm 
-            onSubmit={handleUpdate}
-            onCancel={editModal.close} 
-            isSubmitting={isSubmitting} 
-            initialData={project} 
-          />
-        </div>
+        <ProjectForm 
+          onSubmit={handleUpdate}
+          onCancel={editModal.close} 
+          isSubmitting={isSubmitting} 
+          initialData={project} 
+        />
       </Modal>
 
       <ConfirmModal 

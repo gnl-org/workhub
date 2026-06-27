@@ -13,7 +13,7 @@ export default function ConfirmModal({
 }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} isPreventClose={isSubmitting}>
-      <div className="flex flex-col items-center text-center">
+      <div className="flex flex-col items-center text-center p-6">
         <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-6">
           <AlertTriangle size={32} />
         </div>

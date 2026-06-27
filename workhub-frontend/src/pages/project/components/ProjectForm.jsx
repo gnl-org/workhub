@@ -21,7 +21,7 @@ export default function ProjectForm({ onSubmit, onCancel, isSubmitting, initialD
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="p-6 space-y-6">
       <div>
         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">
           Project Title
