@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { CheckCircle2, ChevronRight, MoreHorizontal, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ChevronRight, MoreHorizontal, ArrowRight, GripVertical } from 'lucide-react';
+import { useDraggable } from '@dnd-kit/core';
 
 export default function BacklogTaskRow({ task, stages, onMoveTask }) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: task.id,
+    data: { type: 'task', workStageId: task.workStageId },
+  });
 
   const getPriorityStyle = (priority) => {
     switch (priority) {
@@ -13,8 +19,25 @@ export default function BacklogTaskRow({ task, stages, onMoveTask }) {
     }
   };
 
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+
   return (
-    <div className="p-3 hover:bg-slate-50/50 transition-all flex items-center justify-between group cursor-pointer border-b border-slate-50 last:border-b-0">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`p-3 transition-all flex items-center justify-between group border-b border-slate-50 last:border-b-0 ${
+        isDragging ? 'opacity-40 bg-indigo-50' : 'hover:bg-slate-50/50'
+      }`}
+    >
+      <button
+        {...listeners}
+        {...attributes}
+        className="p-1 mr-1 rounded text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing flex-shrink-0"
+      >
+        <GripVertical size={16} />
+      </button>
       <div className="flex items-center gap-3 flex-1">
         <CheckCircle2 className={task.status === 'COMPLETED' ? 'text-emerald-500' : 'text-slate-200'} size={18} />
 
@@ -51,7 +74,7 @@ export default function BacklogTaskRow({ task, stages, onMoveTask }) {
 
         <div className="relative">
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(!menuOpen); }}
             className="p-1 rounded-lg text-slate-300 hover:text-slate-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100"
           >
             <MoreHorizontal size={14} />

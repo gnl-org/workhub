@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MoreHorizontal, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, ArrowRight, GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 const priorityColors = {
@@ -36,13 +36,18 @@ export default function SprintTaskCard({ task, onStatusChange }) {
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
       className={`bg-white p-4 rounded-xl shadow-sm border transition-colors group relative ${
         isDragging ? 'border-indigo-400 shadow-lg opacity-50' : 'border-slate-200 hover:border-indigo-300'
       }`}
     >
       <div className="flex justify-between items-start mb-2">
+        <button
+          {...listeners}
+          {...attributes}
+          className="p-0.5 rounded text-slate-300 hover:text-slate-500 hover:bg-slate-100 transition cursor-grab active:cursor-grabbing -ml-1"
+        >
+          <GripVertical size={14} />
+        </button>
         <span className="text-[10px] font-mono text-slate-400 group-hover:text-indigo-500 font-bold transition">
           {task.title?.slice(0, 2).toUpperCase() || 'WH'}-{task.id?.toString().slice(0, 4)}
         </span>

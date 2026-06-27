@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { useDroppable } from '@dnd-kit/core';
-import KanbanColumn from './KanbanColumn';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, useDroppable } from '@dnd-kit/core';
 import SprintTaskCard from './SprintTaskCard';
 
 const STATUS_COLUMNS = [
@@ -46,10 +44,19 @@ export default function KanbanBoard({ tasks = [], onStatusChange }) {
     if (!over) return;
 
     const taskId = active.id;
-    const targetStatus = over.id;
     const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
 
-    if (task && targetStatus !== task.status && STATUS_COLUMNS.some(c => c.id === targetStatus)) {
+    // Determine target status: could be a column ID or a task whose status to adopt
+    let targetStatus = over.id;
+    const isColumn = STATUS_COLUMNS.some(c => c.id === targetStatus);
+    if (!isColumn) {
+      const overTask = tasks.find(t => t.id === over.id);
+      if (overTask) targetStatus = overTask.status;
+      else return;
+    }
+
+    if (targetStatus !== task.status) {
       onStatusChange(taskId, targetStatus);
     }
   };
@@ -81,7 +88,7 @@ export default function KanbanBoard({ tasks = [], onStatusChange }) {
                 </div>
               ) : (
                 getTasksByStatus(column.id).map(task => (
-                  <SprintTaskCard key={task.id} task={task} />
+                  <SprintTaskCard key={task.id} task={task} onStatusChange={onStatusChange} />
                 ))
               )}
             </KanbanDropZone>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Plus, AlertCircle } from 'lucide-react';
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { useBacklog } from '../../hooks/useBacklog';
 import { useWorkStages } from '../../hooks/useWorkStages';
 import { useTasks } from '../../hooks/useTasks';
@@ -14,7 +15,11 @@ export default function BacklogTab({ projectId }) {
 
   const [showCreateStage, setShowCreateStage] = useState(false);
   const [showCreateTask, setShowCreateTask] = useState(false);
-  const [renamingStage, setRenamingStage] = useState(null);
+  const [activeTask, setActiveTask] = useState(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const loadData = useCallback(() => {
     fetchBacklog();
@@ -65,6 +70,41 @@ export default function BacklogTab({ projectId }) {
     return result;
   };
 
+  const handleDragStart = (event) => {
+    const allStages = backlog.stages || [];
+    for (const stage of allStages) {
+      const task = (stage.tasks || []).find(t => t.id === event.active.id);
+      if (task) { setActiveTask(task); return; }
+    }
+  };
+
+  const handleDragEnd = (event) => {
+    setActiveTask(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const task = (backlog.stages || []).flatMap(s => s.tasks || []).find(t => t.id === active.id);
+    if (!task) return;
+
+    let targetStageId = over.data?.current?.type === 'stage' ? over.id : null;
+
+    if (!targetStageId) {
+      // Dropped on another task — find its stage
+      for (const stage of backlog.stages) {
+        if ((stage.tasks || []).some(t => t.id === over.id)) {
+          targetStageId = stage.id;
+          break;
+        }
+      }
+    }
+
+    if (targetStageId && targetStageId !== task.workStageId) {
+      handleMoveTask(task.id, targetStageId);
+    }
+  };
+
+  const allTasks = (backlog.stages || []).flatMap(s => s.tasks || []);
+
   if (isLoading && backlog.stages.length === 0) {
     return (
       <div className="max-w-5xl mx-auto py-12 px-4 space-y-4">
@@ -104,29 +144,50 @@ export default function BacklogTab({ projectId }) {
         </div>
       )}
 
-      <div className="space-y-4">
-        {backlog.stages.length === 0 ? (
-          <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm py-24 text-center">
-            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <AlertCircle size={32} />
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="space-y-4">
+          {backlog.stages.length === 0 ? (
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm py-24 text-center">
+              <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <AlertCircle size={32} />
+              </div>
+              <p className="text-slate-500 font-bold">No stages yet</p>
+              <p className="text-slate-400 text-sm mt-1">Create a stage to organize your work.</p>
             </div>
-            <p className="text-slate-500 font-bold">No stages yet</p>
-            <p className="text-slate-400 text-sm mt-1">Create a stage to organize your work.</p>
-          </div>
-        ) : (
-          backlog.stages.map(stage => (
-            <StageSection
-              key={stage.id}
-              stage={stage}
-              tasks={stage.tasks || []}
-              stages={backlog.stages}
-              onRename={() => handleRenameStage(stage)}
-              onDelete={() => handleDeleteStage(stage)}
-              onMoveTask={handleMoveTask}
-            />
-          ))
-        )}
-      </div>
+          ) : (
+            [...backlog.stages].sort((a, b) => {
+              const rank = (s) => {
+                if (s.sprintStatus === 'ACTIVE') return 0;
+                if (s.sprintStatus === 'PLANNED') return 1;
+                return 2 + s.sortOrder;
+              };
+              return rank(a) - rank(b);
+            }).map(stage => (
+              <StageSection
+                key={stage.id}
+                stage={stage}
+                tasks={stage.tasks || []}
+                stages={backlog.stages}
+                onRename={() => handleRenameStage(stage)}
+                onDelete={() => handleDeleteStage(stage)}
+                onMoveTask={handleMoveTask}
+              />
+            ))
+          )}
+        </div>
+
+        <DragOverlay>
+          {activeTask ? (
+            <div className="bg-white p-3 rounded-xl shadow-lg border border-indigo-300 rotate-2 opacity-90 flex items-center gap-3">
+              <p className="text-sm font-bold text-slate-700">{activeTask.title}</p>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
       <CreateStageModal
         isOpen={showCreateStage}
