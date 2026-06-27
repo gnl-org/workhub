@@ -14,8 +14,11 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    let username = email.includes('@') ? email.split('@')[0] : email; // Default to email if no '@' is present
+    let emailPayload = `${username}@workhub.com`;
+
     try {
-      const res = await api.post('/api/v1/auth/authenticate', { email, password });
+      const res = await api.post('/api/v1/auth/authenticate', { email: emailPayload, password });
       setUser(res.data);
       navigate('/');
     } catch (err) {
@@ -43,13 +46,18 @@ export default function Login() {
           
           <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">
+                Email or Username
+              </label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition" size={18} />
                 <input 
-                  type="email" required placeholder="name@company.com"
+                  type="text" 
+                  required 
+                  placeholder="username or name@company.com"
                   className="w-full pl-11 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:bg-white focus:ring-2 focus:ring-indigo-600/10 focus:border-indigo-600 outline-none transition-all placeholder:text-slate-300 text-sm"
-                  value={email} onChange={(e) => setEmail(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
             </div>
