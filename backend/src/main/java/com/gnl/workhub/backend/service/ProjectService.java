@@ -16,6 +16,7 @@ import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
 import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
+import com.gnl.workhub.backend.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,7 +24,6 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -38,14 +38,9 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final TaskRepository taskRepository;
     private final WorkStageService workStageService;
+    private final SecurityUtil securityUtil;
 
     // --- HELPER METHODS ---
-    private User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
-
     private List<ProjectResponse> toResponseList(List<Project> projects) {
         return projects.stream()
                 .map(projectMapper::toResponse)
@@ -69,14 +64,14 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + id));
 
-        validateProjectAccess(project, getCurrentUser());
+        validateProjectAccess(project, securityUtil.getCurrentUser());
         return projectMapper.toResponse(project);
     }
 
     @Transactional
     @CacheEvict(value = "projects", allEntries = true)
     public ProjectResponse createProject(ProjectRequest request) {
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
 
         Project project = projectMapper.toEntity(request, currentUser);
         Project savedProject = projectRepository.save(project);
@@ -94,7 +89,7 @@ public class ProjectService {
     }
 
     public List<ProjectResponse> getMyProjects() {
-        return toResponseList(projectRepository.findByOwnerId(getCurrentUser().getId()));
+        return toResponseList(projectRepository.findByOwnerId(securityUtil.getCurrentUser().getId()));
     }
 
     @Transactional
@@ -103,7 +98,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
 
-        validateProjectAccess(project, getCurrentUser());
+        validateProjectAccess(project, securityUtil.getCurrentUser());
 
         projectMapper.updateEntityFromRequest(request, project);
         return projectMapper.toResponse(projectRepository.save(project));
@@ -114,7 +109,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
 
-        User user = getCurrentUser();
+        User user = securityUtil.getCurrentUser();
         if (!project.getOwner().getId().equals(user.getId()) && user.getGlobalRole() != UserRole.ADMIN) {
             throw new AccessDeniedException("Only the owner can delete this project");
         }
@@ -127,7 +122,7 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + projectId));
 
-        User user = getCurrentUser();
+        User user = securityUtil.getCurrentUser();
         if (!project.getOwner().getId().equals(user.getId()) && user.getGlobalRole() != UserRole.ADMIN) {
             throw new AccessDeniedException("Only the owner can delete this project");
         }

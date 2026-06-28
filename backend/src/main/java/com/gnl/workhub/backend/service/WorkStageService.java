@@ -18,10 +18,9 @@ import com.gnl.workhub.backend.repository.ProjectMemberRepository;
 import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import com.gnl.workhub.backend.repository.WorkStageRepository;
+import com.gnl.workhub.backend.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,6 +39,7 @@ public class WorkStageService {
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final WorkStageMapper workStageMapper;
+    private final SecurityUtil securityUtil;
 
     public List<WorkStageResponse> listVisibleStages(UUID projectId) {
         validateProjectAccess(projectId);
@@ -182,7 +182,7 @@ public class WorkStageService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
-        User user = getCurrentUser();
+        User user = securityUtil.getCurrentUser();
         if (user.getGlobalRole().equals(UserRole.ADMIN)) return;
 
         boolean isOwner = project.getOwner().getId().equals(user.getId());
@@ -195,9 +195,4 @@ public class WorkStageService {
         }
     }
 
-    private User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
 }

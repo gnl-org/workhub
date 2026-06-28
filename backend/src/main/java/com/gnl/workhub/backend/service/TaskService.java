@@ -11,13 +11,12 @@ import com.gnl.workhub.backend.mapper.TaskDetailsMapper;
 import com.gnl.workhub.backend.mapper.TaskMapper;
 import com.gnl.workhub.backend.repository.*;
 import com.gnl.workhub.backend.specification.TaskSpecifications;
+import com.gnl.workhub.backend.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +37,11 @@ public class TaskService {
     private final ActivityLogService activityLogService;
     private final WorkStageService workStageService;
     private final WorkStageRepository workStageRepository;
+    private final SecurityUtil securityUtil;
 
     @Transactional
     public TaskResponse createTask(UUID projectId, TaskRequest request) {
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
 
         // 1. Fetch Project based on URL ID
         Project project = projectRepository.findById(projectId)
@@ -76,7 +76,7 @@ public class TaskService {
     @Transactional
     public TaskResponse updateTask(UUID projectId, UUID taskId, UpdateTaskRequest request) {
         Task task = getValidatedTask(projectId, taskId);
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
 
         // SECURITY: Can the user edit tasks in this project?
         validateTaskAccess(task, currentUser);
@@ -101,7 +101,7 @@ public class TaskService {
     @Transactional
     public void deleteTask(UUID projectId, UUID taskId) {
         Task task = getValidatedTask(projectId, taskId);
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
 
         // SECURITY: Based on your documentation, only Owner/ADMIN can delete
         if (!currentUser.getGlobalRole().equals(UserRole.ADMIN) &&
@@ -118,7 +118,7 @@ public class TaskService {
 
     public TaskDetailsResponse getTaskById(UUID projectId, UUID taskId) {
         Task task = getValidatedTask(projectId, taskId);
-        validateTaskAccess(task, getCurrentUser());
+        validateTaskAccess(task, securityUtil.getCurrentUser());
         return taskDetailsMapper.toResponse(task);
     }
 
@@ -129,7 +129,7 @@ public class TaskService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
-        validateProjectAccess(project, getCurrentUser());
+        validateProjectAccess(project, securityUtil.getCurrentUser());
 
         // 2. Fetch with filters AND pagination
 //        Page<Task> tasks = taskRepository.findAdvancedFilteredTasks(
@@ -145,7 +145,7 @@ public class TaskService {
     @Transactional(readOnly = true)
     public BacklogResponse getBacklog(UUID projectId) {
         validateProjectAccess(projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), getCurrentUser());
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), securityUtil.getCurrentUser());
 
         List<WorkStage> stages = workStageRepository.findByProjectIdOrderBySortOrderAsc(projectId);
         BacklogResponse response = new BacklogResponse();
@@ -182,7 +182,7 @@ public class TaskService {
     @Transactional
     public TaskResponse moveTask(UUID projectId, UUID taskId, MoveTaskRequest request) {
         Task task = getValidatedTask(projectId, taskId);
-        User currentUser = getCurrentUser();
+        User currentUser = securityUtil.getCurrentUser();
         validateTaskAccess(task, currentUser);
 
         WorkStage targetStage = workStageRepository.findById(request.getWorkStageId())
@@ -219,7 +219,7 @@ public class TaskService {
     @Transactional
     public void reorderTasksInStage(UUID projectId, UUID stageId, ReorderTasksRequest request) {
         validateProjectAccess(projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), getCurrentUser());
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found")), securityUtil.getCurrentUser());
 
         List<Task> tasks = taskRepository.findByWorkStageIdAndDeletedFalseOrderBySortOrderAsc(stageId);
         Map<UUID, Task> taskMap = tasks.stream().collect(Collectors.toMap(Task::getId, t -> t));
@@ -260,12 +260,6 @@ public class TaskService {
         if (!isOwner && !isMember) {
             throw new AccessDeniedException("Access Denied: You are not a member of this project.");
         }
-    }
-
-    private User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     private void validateTaskAccess(Task task, User user) {

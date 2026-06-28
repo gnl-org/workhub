@@ -9,10 +9,9 @@ import com.gnl.workhub.backend.exception.ResourceNotFoundException;
 import com.gnl.workhub.backend.mapper.SprintMapper;
 import com.gnl.workhub.backend.mapper.TaskMapper;
 import com.gnl.workhub.backend.repository.*;
+import com.gnl.workhub.backend.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +38,7 @@ public class SprintService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ActivityLogService activityLogService;
+    private final SecurityUtil securityUtil;
 
     public List<SprintResponse> listSprints(UUID projectId) {
         validateProjectAccess(projectId);
@@ -139,7 +139,7 @@ public class SprintService {
         }
 
         sprint = sprintRepository.save(sprint);
-        activityLogService.logProjectEvent(sprint.getProject(), getCurrentUser(), "SPRINT_STARTED", sprint.getName());
+        activityLogService.logProjectEvent(sprint.getProject(), securityUtil.getCurrentUser(), "SPRINT_STARTED", sprint.getName());
 
         return toResponseWithCounts(sprint);
     }
@@ -197,7 +197,7 @@ public class SprintService {
             response.setTargetSprintName(targetSprint.getName());
         }
 
-        activityLogService.logProjectEvent(sprint.getProject(), getCurrentUser(), "SPRINT_CLOSED", sprint.getName());
+        activityLogService.logProjectEvent(sprint.getProject(), securityUtil.getCurrentUser(), "SPRINT_CLOSED", sprint.getName());
 
         return response;
     }
@@ -295,7 +295,7 @@ public class SprintService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
-        User user = getCurrentUser();
+        User user = securityUtil.getCurrentUser();
         if (user.getGlobalRole().equals(UserRole.ADMIN)) return;
 
         boolean isOwner = project.getOwner().getId().equals(user.getId());
@@ -308,9 +308,4 @@ public class SprintService {
         }
     }
 
-    private User getCurrentUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
 }
