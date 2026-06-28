@@ -11,7 +11,7 @@ import SprintHistoryTab from './SprintHistoryTab';
 
 export default function ProjectDetails() {
   const { projectId } = useParams();
-  const [activeTab, setActiveTab] = useState('backlog');
+  const [activeTab, setActiveTab] = useState('sprint');
   const [project, setProject] = useState(null);
 
   useEffect(() => {

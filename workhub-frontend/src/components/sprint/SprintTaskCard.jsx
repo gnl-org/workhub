@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MoreHorizontal, ArrowRight, GripVertical } from 'lucide-react';
+import { MoreHorizontal, ArrowRight, ArrowLeft, GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
 const priorityColors = {
@@ -9,9 +9,17 @@ const priorityColors = {
 };
 
 const NEXT_STATUS = {
-  OPEN: 'IN_PROGRESS',
+  OPEN: 'BLOCKED',
+  BLOCKED: 'IN_PROGRESS',
   IN_PROGRESS: 'IN_REVIEW',
   IN_REVIEW: 'COMPLETED',
+};
+
+const PREV_STATUS = {
+  BLOCKED: 'OPEN',
+  IN_PROGRESS: 'BLOCKED',
+  IN_REVIEW: 'IN_PROGRESS',
+  COMPLETED: 'IN_REVIEW',
 };
 
 export default function SprintTaskCard({ task, onStatusChange }) {
@@ -27,6 +35,7 @@ export default function SprintTaskCard({ task, onStatusChange }) {
     : '??';
 
   const nextStatus = NEXT_STATUS[task.status];
+  const prevStatus = PREV_STATUS[task.status];
 
   const style = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -60,6 +69,14 @@ export default function SprintTaskCard({ task, onStatusChange }) {
           </button>
           {menuOpen && (
             <div className="absolute right-0 top-6 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[160px] z-20">
+              {prevStatus && (
+                <button
+                  onClick={() => { onStatusChange?.(task.id, prevStatus); setMenuOpen(false); }}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition"
+                >
+                  <ArrowLeft size={12} /> Move to {prevStatus.replace('_', ' ')}
+                </button>
+              )}
               {nextStatus && (
                 <button
                   onClick={() => { onStatusChange?.(task.id, nextStatus); setMenuOpen(false); }}
