@@ -6,6 +6,7 @@ import SprintEmptyState from '../../components/sprint/SprintEmptyState';
 import SprintManageDrawer from '../../components/sprint/SprintManageDrawer';
 import CloseSprintModal from '../../components/sprint/CloseSprintModal';
 import KanbanBoard from '../../components/sprint/KanbanBoard';
+import TaskDetailModal from '../../components/task/TaskDetailModal';
 
 export default function ActiveSprintTab({ projectId }) {
   const {
@@ -19,6 +20,8 @@ export default function ActiveSprintTab({ projectId }) {
   const [showManageDrawer, setShowManageDrawer] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [detailTaskId, setDetailTaskId] = useState(null);
+  const [members, setMembers] = useState([]);
 
   const loadData = useCallback(async () => {
     const as = await fetchActiveSprint();
@@ -35,7 +38,8 @@ export default function ActiveSprintTab({ projectId }) {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    api.get(`/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
+  }, [projectId, loadData]);
 
   const handleStartSprint = async (sprintId) => {
     const result = await startSprint(sprintId);
@@ -126,6 +130,7 @@ export default function ActiveSprintTab({ projectId }) {
       <KanbanBoard
         tasks={tasks}
         onStatusChange={handleStatusChange}
+        onTaskClick={setDetailTaskId}
       />
 
       {showManageDrawer && (
@@ -147,6 +152,15 @@ export default function ActiveSprintTab({ projectId }) {
           isClosing={isClosing}
         />
       )}
+
+      <TaskDetailModal
+        projectId={projectId}
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+        onUpdated={loadData}
+        members={members}
+      />
     </div>
   );
 }

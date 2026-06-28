@@ -4,10 +4,12 @@ import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors } from '@
 import { useBacklog } from '../../hooks/useBacklog';
 import { useWorkStages } from '../../hooks/useWorkStages';
 import { useTasks } from '../../hooks/useTasks';
+import api from '../../api/axios';
 import StageSection from '../../components/backlog/StageSection';
 import StageInsertionPoint from '../../components/backlog/StageInsertionPoint';
 import CreateStageModal from '../../components/backlog/CreateStageModal';
 import CreateTaskModal from '../../components/backlog/CreateTaskModal';
+import TaskDetailModal from '../../components/task/TaskDetailModal';
 
 const sortStages = (stages) =>
   [...stages].sort((a, b) => {
@@ -29,6 +31,8 @@ export default function BacklogTab({ projectId }) {
   const [activeTask, setActiveTask] = useState(null);
   const [activeStage, setActiveStage] = useState(null);
   const [activeType, setActiveType] = useState(null);
+  const [detailTaskId, setDetailTaskId] = useState(null);
+  const [members, setMembers] = useState([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -40,7 +44,8 @@ export default function BacklogTab({ projectId }) {
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+    api.get(`/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
+  }, [projectId, loadData]);
 
   const handleMoveTask = async (taskId, stageId) => {
     await moveTaskOptimistic(taskId, stageId);
@@ -77,6 +82,10 @@ export default function BacklogTab({ projectId }) {
       fetchBacklog();
     }
     return result;
+  };
+
+  const handleTaskUpdated = () => {
+    fetchBacklog();
   };
 
   const handleDragStart = (event) => {
@@ -229,6 +238,7 @@ export default function BacklogTab({ projectId }) {
                     onRename={() => handleRenameStage(stage)}
                     onDelete={() => handleDeleteStage(stage)}
                     onMoveTask={handleMoveTask}
+                    onTaskClick={setDetailTaskId}
                   />
                   <StageInsertionPoint index={i + 1} show={isStageDragging} />
                 </React.Fragment>
@@ -265,6 +275,16 @@ export default function BacklogTab({ projectId }) {
         onClose={() => setShowCreateTask(false)}
         onCreate={handleCreateTask}
         stages={backlog.stages}
+        members={members}
+      />
+
+      <TaskDetailModal
+        projectId={projectId}
+        taskId={detailTaskId}
+        isOpen={!!detailTaskId}
+        onClose={() => setDetailTaskId(null)}
+        onUpdated={handleTaskUpdated}
+        members={members}
       />
     </div>
   );

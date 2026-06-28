@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserResponse {
+    private java.util.UUID id;
     private String email;
     private String role;
     private String fullName;

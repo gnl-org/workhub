@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.dto;
 
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
+import com.gnl.workhub.backend.enums.TaskType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -13,9 +14,11 @@ public class TaskResponse {
     private String title;
     private String description;
     private UUID projectTitle;
-    private String assigneeName; // "John Doe" instead of a nested User object
+    private String assigneeName;
     private TaskStatus status;
     private TaskPriority priority;
+    private TaskType taskType;
+    private Integer storyPoints;
     private LocalDateTime dueDate;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

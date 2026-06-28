@@ -66,6 +66,7 @@ public class ProjectMemberService {
 
         return members.stream()
                 .map(id -> ProjectMemberResponse.builder()
+                        .userId(id.getUser().getId())
                         .userName(id.getUser().getFullName())
                         .userEmail(id.getUser().getEmail())
                         .build())

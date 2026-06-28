@@ -22,7 +22,7 @@ const PREV_STATUS = {
   COMPLETED: 'IN_REVIEW',
 };
 
-export default function SprintTaskCard({ task, onStatusChange }) {
+export default function SprintTaskCard({ task, onStatusChange, onClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -45,7 +45,8 @@ export default function SprintTaskCard({ task, onStatusChange }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-white p-4 rounded-xl shadow-sm border transition-colors group relative ${
+      onClick={onClick}
+      className={`bg-white p-4 rounded-xl shadow-sm border transition-colors group relative cursor-pointer ${
         isDragging ? 'border-indigo-400 shadow-lg opacity-50' : 'border-slate-200 hover:border-indigo-300'
       }`}
     >

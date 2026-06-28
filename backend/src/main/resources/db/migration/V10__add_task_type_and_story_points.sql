@@ -1,0 +1,3 @@
+ALTER TABLE tasks
+    ADD COLUMN task_type VARCHAR(20) NOT NULL DEFAULT 'TASK',
+    ADD COLUMN story_points INT;

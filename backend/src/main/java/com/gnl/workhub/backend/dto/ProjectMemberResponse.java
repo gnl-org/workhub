@@ -7,6 +7,7 @@ import java.util.UUID;
 
 @Builder
 public record ProjectMemberResponse(
+        UUID userId,
         String userEmail,
         String userName
 ) {}

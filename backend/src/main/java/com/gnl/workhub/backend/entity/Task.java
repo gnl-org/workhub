@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.entity;
 
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
+import com.gnl.workhub.backend.enums.TaskType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -41,6 +42,13 @@ public class Task extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private TaskPriority priority = TaskPriority.MEDIUM;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private TaskType taskType = TaskType.TASK;
+
+    @Column(name = "story_points")
+    private Integer storyPoints;
 
     @Column(name = "due_date")
     private LocalDateTime dueDate;

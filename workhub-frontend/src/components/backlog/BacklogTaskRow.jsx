@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, ChevronRight, MoreHorizontal, ArrowRight, GripVertical } from 'lucide-react';
 import { useDraggable } from '@dnd-kit/core';
 
-export default function BacklogTaskRow({ task, stages, onMoveTask }) {
+export default function BacklogTaskRow({ task, stages, onMoveTask, onClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -27,7 +27,8 @@ export default function BacklogTaskRow({ task, stages, onMoveTask }) {
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 transition-all flex items-center justify-between group border-b border-slate-50 last:border-b-0 ${
+      onClick={onClick}
+      className={`p-3 transition-all flex items-center justify-between group border-b border-slate-50 last:border-b-0 cursor-pointer ${
         isDragging ? 'opacity-40 bg-indigo-50' : 'hover:bg-slate-50/50'
       }`}
     >

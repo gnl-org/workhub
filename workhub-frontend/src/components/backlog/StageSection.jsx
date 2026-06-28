@@ -3,7 +3,7 @@ import { useDroppable } from '@dnd-kit/core';
 import StageHeader from './StageHeader';
 import BacklogTaskRow from './BacklogTaskRow';
 
-export default function StageSection({ stage, tasks, stages, onRename, onDelete, onMoveTask }) {
+export default function StageSection({ stage, tasks, stages, onRename, onDelete, onMoveTask, onTaskClick }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const { setNodeRef, isOver } = useDroppable({
@@ -37,6 +37,7 @@ export default function StageSection({ stage, tasks, stages, onRename, onDelete,
                 task={task}
                 stages={stages}
                 onMoveTask={onMoveTask}
+                onClick={() => onTaskClick?.(task.id)}
               />
             ))
           )}

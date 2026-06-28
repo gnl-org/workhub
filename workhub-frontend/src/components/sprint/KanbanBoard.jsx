@@ -24,7 +24,7 @@ function KanbanDropZone({ columnId, children }) {
   );
 }
 
-export default function KanbanBoard({ tasks = [], onStatusChange }) {
+export default function KanbanBoard({ tasks = [], onStatusChange, onTaskClick }) {
   const [activeTask, setActiveTask] = useState(null);
 
   const sensors = useSensors(
@@ -89,7 +89,7 @@ export default function KanbanBoard({ tasks = [], onStatusChange }) {
                 </div>
               ) : (
                 getTasksByStatus(column.id).map(task => (
-                  <SprintTaskCard key={task.id} task={task} onStatusChange={onStatusChange} />
+                  <SprintTaskCard key={task.id} task={task} onStatusChange={onStatusChange} onClick={() => onTaskClick?.(task.id)} />
                 ))
               )}
             </KanbanDropZone>

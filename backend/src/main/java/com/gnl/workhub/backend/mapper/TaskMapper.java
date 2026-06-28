@@ -13,7 +13,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskMapper {
 
-    // Map Request -> Entity
     public Task toEntity(TaskRequest request, Project project, User assignee, User creator) {
         Task.TaskBuilder builder = Task.builder()
                 .title(request.getTitle())
@@ -23,6 +22,8 @@ public class TaskMapper {
                 .owner(creator)
                 .status(request.getStatus())
                 .priority(request.getPriority())
+                .taskType(request.getTaskType())
+                .storyPoints(request.getStoryPoints())
                 .dueDate(request.getDueDate());
 
         if (request.getWorkStageId() != null) {
@@ -34,7 +35,6 @@ public class TaskMapper {
         return builder.build();
     }
 
-    // Partial update - Map UpdateRequest -> Entity (only update non-null fields)
     public void updateEntityFromRequest(UpdateTaskRequest request, Task task, User assignee) {
         if (request.getTitle() != null) {
             task.setTitle(request.getTitle());
@@ -48,14 +48,18 @@ public class TaskMapper {
         if (request.getPriority() != null) {
             task.setPriority(request.getPriority());
         }
+        if (request.getTaskType() != null) {
+            task.setTaskType(request.getTaskType());
+        }
+        if (request.getStoryPoints() != null) {
+            task.setStoryPoints(request.getStoryPoints());
+        }
         if (request.getDueDate() != null) {
             task.setDueDate(request.getDueDate());
         }
-        // For assignedTo, we allow it to be set to null (unassign)
         task.setAssignedTo(assignee);
     }
 
-    // Map Entity -> Response
     public TaskResponse toResponse(Task task) {
         TaskResponse response = new TaskResponse();
         response.setId(task.getId());
@@ -63,6 +67,8 @@ public class TaskMapper {
         response.setDescription(task.getDescription());
         response.setStatus(task.getStatus());
         response.setPriority(task.getPriority());
+        response.setTaskType(task.getTaskType());
+        response.setStoryPoints(task.getStoryPoints());
         response.setDueDate(task.getDueDate());
         response.setCreatedAt(task.getCreatedAt());
         response.setUpdatedAt(task.getUpdatedAt());

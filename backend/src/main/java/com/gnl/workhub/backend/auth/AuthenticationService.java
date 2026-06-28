@@ -56,6 +56,7 @@ public class AuthenticationService {
                 .build();
 
         UserResponse userResponse = UserResponse.builder()
+                .id(user.getId())
                 .email(user.getEmail())
                 .role(user.getGlobalRole().name())
                 .fullName(user.getFullName())
@@ -106,6 +107,7 @@ public class AuthenticationService {
                 .orElseThrow();
 
         return UserResponse.builder()
+                .id(user.getId())
                 .email(user.getEmail())
                 .role(user.getGlobalRole().name())
                 .fullName(user.getFullName())

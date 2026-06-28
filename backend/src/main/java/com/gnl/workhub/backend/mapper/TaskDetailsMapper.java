@@ -21,20 +21,25 @@ public class TaskDetailsMapper {
                         c.getCreatedAt()
                 )).toList();
 
+        TaskDetailsResponse.UserSummary assignee = task.getAssignedTo() != null
+                ? new TaskDetailsResponse.UserSummary(
+                        task.getAssignedTo().getId(),
+                        task.getAssignedTo().getFullName(),
+                        task.getAssignedTo().getEmail())
+                : null;
+
         TaskDetailsResponse response = new TaskDetailsResponse(
                 task.getId(),
                 task.getTitle(),
                 task.getDescription(),
                 task.getStatus(),
                 task.getPriority(),
+                task.getTaskType(),
+                task.getStoryPoints(),
                 task.getDueDate(),
                 task.getProject().getId(),
                 task.getProject().getTitle(),
-                new TaskDetailsResponse.UserSummary(
-                        task.getAssignedTo().getId(),
-                        task.getAssignedTo().getFullName(),
-                        task.getAssignedTo().getEmail()
-                ),
+                assignee,
                 new TaskDetailsResponse.UserSummary(
                         task.getOwner().getId(),
                         task.getOwner().getFullName(),
