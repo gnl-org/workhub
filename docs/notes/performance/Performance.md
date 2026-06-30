@@ -47,6 +47,47 @@ ab -n 5000 -c 20 -H "Cookie: accessToken=JWT_TOKEN" http://localhost:8080/projec
 * **Healthy Lifecycle:** Memory exhibits a clean **sawtooth pattern** in VisualVM. It climbs during requests and drops sharply during standard Garbage Collection (GC).
 * **The Static Leak Bug:** Appending data chunks to a **`static` collection** prevents the GC from reclaiming memory. This causes the baseline heap floor to rise continuously until the server throws a fatal `java.lang.OutOfMemoryError` and freezes Tomcat's worker threads (`Acceptor`/`Poller`).
 
+---
+
+## 4. Automated JFR + k6 Performance Test
+
+Records JVM profiling data alongside a staged k6 load test in a single run.
+
+### Usage
+
+```bash
+EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/run-perf.sh
+```
+
+### What It Does
+
+| Step | Action |
+|------|--------|
+| 1 | Finds Spring Boot PID via `jps` |
+| 2 | Starts JFR recording (`settings=profile`) |
+| 3 | Runs k6 (ramp 20 → 50 VUs over 2 min) against `/projects` |
+| 4 | Stops JFR; saves `.jfr` + k6 JSON to `backend/reports/perf_<timestamp>/` |
+
+### Analysis
+
+* **JFR**: Open `recording.jfr` in JDK Mission Control (`jmc`) for heap, CPU, GC, and allocation hotspots during the load window.
+* **k6 summary**: `p(95)` latency printed at the end. The JSON report has per-request breakdowns.
+
+### Reading the Reports
+
+```bash
+# JFR — launch JDK Mission Control 
+# brew install --cache jdkmc    # if not installed
+jmc open backend/reports/perf_<timestamp>/recording.jfr
+
+# k6 JSON — quick peek at metrics
+jq '.metrics' backend/reports/perf_<timestamp>/k6_report.json | head -20
+```
+
+Most useful JFR tabs after a load test: **Memory → GC Pauses** (sawtooth pattern), **CPU → Hot Methods** (where time is spent), **Allocation** (who's allocating).
+
+---
+
 ### The Resource Trade-Offs
 
 #### 1. Memory Constraints (Small Heap)

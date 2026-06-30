@@ -7,3 +7,6 @@ redis_data/
 .env.local
 infra/.env.docker
 infra/.env.docker.local
+
+# Performance test artifacts
+reports/
