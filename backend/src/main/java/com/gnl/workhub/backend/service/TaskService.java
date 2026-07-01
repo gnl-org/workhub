@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.dto.*;
 import com.gnl.workhub.backend.entity.*;
+import com.gnl.workhub.backend.enums.NotificationType;
 import com.gnl.workhub.backend.enums.SprintStatus;
 import com.gnl.workhub.backend.enums.TaskPriority;
 import com.gnl.workhub.backend.enums.TaskStatus;
@@ -38,6 +39,7 @@ public class TaskService {
     private final WorkStageService workStageService;
     private final WorkStageRepository workStageRepository;
     private final SecurityUtil securityUtil;
+    private final NotificationProducer notificationProducer;
 
     @Transactional
     public TaskResponse createTask(UUID projectId, TaskRequest request) {
@@ -70,7 +72,20 @@ public class TaskService {
                 .orElse(-1);
         task.setSortOrder(maxSort + 1);
 
-        return taskMapper.toResponse(taskRepository.save(task));
+        TaskResponse response = taskMapper.toResponse(taskRepository.save(task));
+
+        if (assignee != null) {
+            notificationProducer.send(NotificationMessage.builder()
+                    .type(NotificationType.TASK_ASSIGNED)
+                    .taskId(task.getId())
+                    .projectId(projectId)
+                    .recipientId(assignee.getId())
+                    .triggeredByUserId(currentUser.getId())
+                    .message("You have been assigned to task: " + task.getTitle())
+                    .build());
+        }
+
+        return response;
     }
 
     @Transactional
@@ -88,12 +103,25 @@ public class TaskService {
             validateAssigneeMembership(task.getProject(), assignee);
         }
 
+        User oldAssignee = task.getAssignedTo();
         taskMapper.updateEntityFromRequest(request, task, assignee);
         Task savedTask = taskRepository.save(task);
 
         // Activity log
         Task oldState = task.toBuilder().build();
         activityLogService.logTaskUpdate(oldState, savedTask, currentUser);
+
+        // Notify new assignee if changed
+        if (assignee != null && (oldAssignee == null || !oldAssignee.getId().equals(assignee.getId()))) {
+            notificationProducer.send(NotificationMessage.builder()
+                    .type(NotificationType.TASK_ASSIGNED)
+                    .taskId(savedTask.getId())
+                    .projectId(projectId)
+                    .recipientId(assignee.getId())
+                    .triggeredByUserId(currentUser.getId())
+                    .message("You have been assigned to task: " + savedTask.getTitle())
+                    .build());
+        }
 
         return taskMapper.toResponse(savedTask);
     }
