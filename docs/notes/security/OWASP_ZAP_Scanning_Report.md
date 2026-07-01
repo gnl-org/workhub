@@ -115,9 +115,38 @@ To fix systemic errors like `Cross-Origin-Resource-Policy Header Missing [90004]
 
 ```
 
+## 5. Automated ZAP Scan Script
+
+A convenience script wraps the Docker command with cookie injection and saves the HTML report automatically.
+
+### Prerequisites
+
+Docker is required. The script auto-pulls the image if missing:
+
+```bash
+docker pull ghcr.io/zaproxy/zaproxy:stable
+```
+
+### Usage
+
+```bash
+EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/zap-scan.sh
+```
+
+### What It Does
+
+| Step | Action |
+|------|--------|
+| 1 | Logs in via `curl`, extracts `accessToken` cookie from `Set-Cookie` |
+| 2 | Runs ZAP baseline scan against `http://host.docker.internal:8080/projects` with the cookie injected |
+| 3 | Saves HTML report to `backend/reports/zap_<timestamp>/report.html` |
+| 4 | Prints report path and exit code |
+
+The report is self-contained HTML — open it directly in a browser.
+
 ---
 
-## 5. Final Security Verdict
+## 6. Final Security Verdict
 
 * **Critical Vulnerabilities (`FAIL-NEW`):** **0**
 * **Passed Evaluations (`PASS`):** **64**
