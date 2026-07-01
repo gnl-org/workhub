@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -62,14 +63,24 @@ public class ProjectMemberService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Project not found"));
 
-        List<ProjectMember> members = projectMemberRepository.findMembersByProjectId(projectId);
-
-        return members.stream()
-                .map(id -> ProjectMemberResponse.builder()
-                        .userId(id.getUser().getId())
-                        .userName(id.getUser().getFullName())
-                        .userEmail(id.getUser().getEmail())
+        List<ProjectMemberResponse> result = new ArrayList<>(projectMemberRepository.findMembersByProjectId(projectId)
+                .stream()
+                .map(m -> ProjectMemberResponse.builder()
+                        .userId(m.getUser().getId())
+                        .userName(m.getUser().getFullName())
+                        .userEmail(m.getUser().getEmail())
                         .build())
-                .toList();
+                .toList());
+
+        boolean ownerIncluded = result.stream().anyMatch(m -> m.userId().equals(project.getOwner().getId()));
+        if (!ownerIncluded) {
+            result.add(ProjectMemberResponse.builder()
+                    .userId(project.getOwner().getId())
+                    .userName(project.getOwner().getFullName())
+                    .userEmail(project.getOwner().getEmail())
+                    .build());
+        }
+
+        return result;
     }
 }
