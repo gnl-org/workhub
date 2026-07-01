@@ -6,6 +6,7 @@ import io.github.bucket4j.Refill;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
@@ -16,13 +17,23 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class RateLimitingFilter implements Filter {
 
-    // Cache to hold individual buckets per IP address
     private final Map<String, Bucket> cache = new ConcurrentHashMap<>();
+    private final int capacity;
+    private final int refillTokens;
+    private final Duration refillDuration;
 
-    // Define the limit: 5 login attempts per minute per IP address
+    public RateLimitingFilter(
+            @Value("${rate-limit.capacity}") int capacity,
+            @Value("${rate-limit.refill-tokens}") int refillTokens,
+            @Value("${rate-limit.refill-duration-minutes}") int refillDurationMinutes) {
+        this.capacity = capacity;
+        this.refillTokens = refillTokens;
+        this.refillDuration = Duration.ofMinutes(refillDurationMinutes);
+    }
+
     private Bucket createNewBucket() {
         return Bucket.builder()
-                .addLimit(Bandwidth.classic(5, Refill.intervally(5, Duration.ofMinutes(1))))
+                .addLimit(Bandwidth.classic(capacity, Refill.intervally(refillTokens, refillDuration)))
                 .build();
     }
 
