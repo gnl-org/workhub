@@ -26,8 +26,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     depends_on:
       - postgres
+      - rabbitmq
     env_file: .env.docker
 
   redis:
@@ -36,12 +39,12 @@ services:
     ports:
       - "6379:6379"
 
-  # rabbitmq:
-  #   image: rabbitmq:3-management-alpine
-  #   container_name: projecthub-mq
-  #   ports:
-  #     - "5672:5672"   # AMQP protocol
-  #     - "15672:15672" # Management UI
-  #   environment:
-  #     RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-  #     RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: projecthub-mq
+    ports:
+      - "5672:5672"   # AMQP protocol
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
