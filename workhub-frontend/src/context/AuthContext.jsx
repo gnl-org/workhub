@@ -1,11 +1,13 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../api/axios';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null); // Holds { email, role, fullName }
   const [loading, setLoading] = useState(true);
+  const [wsNotification, setWsNotification] = useState(null);
 
   const checkAuthStatus = async () => {
     try {
@@ -22,6 +24,15 @@ export const AuthProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
+  const handleNotification = useCallback((notification) => {
+    setWsNotification(notification);
+  }, []);
+
+  // Compute authenticated status implicitly based on whether a user object exists
+  const isAuthenticated = !!user;
+
+  useWebSocket({ isAuthenticated, onNotification: handleNotification });
+
   const logout = async () => {
     try {
       await api.post('/api/v1/auth/logout');
@@ -33,13 +44,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Compute authenticated status implicitly based on whether a user object exists
-  const isAuthenticated = !!user;
-
   // Memoize the context value to prevent unnecessary re-renders of consumers
   const value = useMemo(
-    () => ({ user, setUser, isAuthenticated, loading, logout }),
-    [user, isAuthenticated, loading]
+    () => ({ user, setUser, isAuthenticated, loading, logout, wsNotification, setWsNotification }),
+    [user, isAuthenticated, loading, wsNotification]
   );
 
   return (

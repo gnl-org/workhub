@@ -9,6 +9,7 @@ import com.gnl.workhub.backend.repository.TaskRepository;
 import com.gnl.workhub.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +21,7 @@ public class NotificationConsumer {
     private final UserRepository userRepository;
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     @RabbitListener(queues = RabbitMQConfig.QUEUE)
@@ -40,5 +42,15 @@ public class NotificationConsumer {
         }
 
         notificationRepository.save(notification);
+
+        if (message.getRecipientId() != null) {
+            userRepository.findById(message.getRecipientId()).ifPresent(recipient -> {
+                messagingTemplate.convertAndSendToUser(
+                        recipient.getEmail(),
+                        "/queue/notifications",
+                        message
+                );
+            });
+        }
     }
 }
