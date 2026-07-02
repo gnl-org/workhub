@@ -13,7 +13,6 @@ export default function Sidebar() {
   };
 
   return (
-    /* This MUST have h-screen and w-20 */
     <aside className="w-20 bg-slate-900 h-screen flex flex-col items-center py-8 justify-between border-r border-slate-800 flex-shrink-0">
       <div className="flex flex-col items-center gap-8">
         <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white text-xl shadow-lg shadow-indigo-500/20">W</div>

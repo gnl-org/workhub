@@ -1,17 +1,21 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import NotificationBell from './NotificationBell';
 
 export default function MainLayout() {
   return (
-    /* 'flex' makes Sidebar (left) and Content (right) sit side-by-side */
     <div className="flex h-screen w-full bg-slate-50 overflow-hidden">
       <Sidebar />
       
-      {/* 'flex-1' ensures this container takes up all remaining space */}
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <header className="flex items-center justify-end px-6 py-3 border-b border-slate-200 bg-white shrink-0">
+          <NotificationBell />
+        </header>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

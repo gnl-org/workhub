@@ -2,6 +2,7 @@ package com.gnl.workhub.backend.service;
 
 import com.gnl.workhub.backend.config.RabbitMQConfig;
 import com.gnl.workhub.backend.dto.NotificationMessage;
+import com.gnl.workhub.backend.dto.NotificationResponse;
 import com.gnl.workhub.backend.entity.Notification;
 import com.gnl.workhub.backend.repository.NotificationRepository;
 import com.gnl.workhub.backend.repository.ProjectRepository;
@@ -48,7 +49,15 @@ public class NotificationConsumer {
                 messagingTemplate.convertAndSendToUser(
                         recipient.getEmail(),
                         "/queue/notifications",
-                        message
+                        new NotificationResponse(
+                                notification.getId(),
+                                notification.getType(),
+                                notification.getMessage(),
+                                notification.getTask() != null ? notification.getTask().getId() : null,
+                                notification.getProject() != null ? notification.getProject().getId() : null,
+                                notification.isRead(),
+                                notification.getCreatedAt()
+                        )
                 );
             });
         }

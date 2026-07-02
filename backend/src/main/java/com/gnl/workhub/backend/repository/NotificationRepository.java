@@ -15,7 +15,7 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
     List<Notification> findByUserIdAndIsReadOrderByCreatedAtDesc(UUID userId, boolean isRead);
 
     @EntityGraph(attributePaths = {"user", "task", "project"})
-    List<Notification> findByUserIdOrderByCreatedAtDesc(UUID userId);
+    List<Notification> findTop30ByUserIdOrderByCreatedAtDesc(UUID userId);
 
     long countByUserIdAndIsRead(UUID userId, boolean isRead);
 }
