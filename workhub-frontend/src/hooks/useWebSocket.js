@@ -10,10 +10,8 @@ export function useWebSocket({ isAuthenticated, onNotification }) {
     const client = new Client({
       brokerURL: 'ws://localhost:8080/ws',
       onConnect: () => {
-        console.log('[WS] Connected to STOMP broker');
         client.subscribe('/user/queue/notifications', (message) => {
           const notification = JSON.parse(message.body);
-          console.log('[WS] Notification received:', notification);
           onNotification?.(notification);
         });
       },

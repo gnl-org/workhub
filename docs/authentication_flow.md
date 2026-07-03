@@ -339,12 +339,12 @@ After login, UI state is optimistic (`setUser` from login). After refresh, UI st
 
 | File | Responsibility |
 |------|----------------|
-| `backend/.../auth/AuthenticationController.java` | Auth HTTP endpoints, cookie issuance |
-| `backend/.../auth/AuthenticationService.java` | Register, login, refresh, getMe logic |
-| `backend/.../service/JwtService.java` | JWT create/validate |
-| `backend/.../config/JwtAuthenticationFilter.java` | Read access cookie per request |
-| `backend/.../config/SecurityConfig.java` | CORS, CSRF, route rules |
-| `backend/src/main/resources/application-dev.properties` | Token TTLs, CORS, JWT secret |
+| `backend/core-service/.../auth/AuthenticationController.java` | Auth HTTP endpoints, cookie issuance |
+| `backend/core-service/.../auth/AuthenticationService.java` | Register, login, refresh, getMe logic |
+| `backend/core-service/.../service/JwtService.java` | JWT create/validate |
+| `backend/core-service/.../config/JwtAuthenticationFilter.java` | Read access cookie per request |
+| `backend/core-service/.../config/SecurityConfig.java` | CORS, CSRF, route rules |
+| `backend/core-service/src/main/resources/application-dev.properties` | Token TTLs, CORS, JWT secret |
 
 ---
 

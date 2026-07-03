@@ -130,7 +130,7 @@ docker pull ghcr.io/zaproxy/zaproxy:stable
 ### Usage
 
 ```bash
-EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/zap-scan.sh
+EMAIL="user@example.com" PASSWORD="your-password" bash backend/core-service/tests/zap-scan.sh
 ```
 
 ### What It Does
@@ -139,7 +139,7 @@ EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/zap-scan.sh
 |------|--------|
 | 1 | Logs in via `curl`, extracts `accessToken` cookie from `Set-Cookie` |
 | 2 | Runs ZAP baseline scan against `http://host.docker.internal:8080/projects` with the cookie injected |
-| 3 | Saves HTML report to `backend/reports/zap_<timestamp>/report.html` |
+| 3 | Saves HTML report to `backend/core-service/reports/zap_<timestamp>/report.html` |
 | 4 | Prints report path and exit code |
 
 The report is self-contained HTML — open it directly in a browser.

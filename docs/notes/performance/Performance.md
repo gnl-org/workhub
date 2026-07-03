@@ -56,7 +56,7 @@ Records JVM profiling data alongside a staged k6 load test in a single run.
 ### Usage
 
 ```bash
-EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/run-perf.sh
+EMAIL="user@example.com" PASSWORD="your-password" bash backend/core-service/tests/run-perf.sh
 ```
 
 ### What It Does
@@ -66,7 +66,7 @@ EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/run-perf.sh
 | 1 | Finds Spring Boot PID via `jps` |
 | 2 | Starts JFR recording (`settings=profile`) |
 | 3 | Runs k6 (ramp 20 → 50 VUs over 2 min) against `/projects` |
-| 4 | Stops JFR; saves `.jfr` + k6 JSON to `backend/reports/perf_<timestamp>/` |
+| 4 | Stops JFR; saves `.jfr` + k6 JSON to `backend/core-service/reports/perf_<timestamp>/` |
 
 ### Analysis
 
@@ -78,10 +78,10 @@ EMAIL="user@example.com" PASSWORD="your-password" bash backend/tests/run-perf.sh
 ```bash
 # JFR — launch JDK Mission Control 
 # brew install --cache jdkmc    # if not installed
-jmc open backend/reports/perf_<timestamp>/recording.jfr
+jmc open backend/core-service/reports/perf_<timestamp>/recording.jfr
 
 # k6 JSON — quick peek at metrics
-jq '.metrics' backend/reports/perf_<timestamp>/k6_report.json | head -20
+jq '.metrics' backend/core-service/reports/perf_<timestamp>/k6_report.json | head -20
 ```
 
 Most useful JFR tabs after a load test: **Memory → GC Pauses** (sawtooth pattern), **CPU → Hot Methods** (where time is spent), **Allocation** (who's allocating).

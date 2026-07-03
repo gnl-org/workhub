@@ -10,3 +10,6 @@ infra/.env.docker.local
 
 # Performance test artifacts
 reports/
+
+# opencode personal instructions
+.opencode/instructions.md
