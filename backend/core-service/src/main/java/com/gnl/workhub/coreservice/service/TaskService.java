@@ -80,6 +80,7 @@ public class TaskService {
                     .taskId(task.getId())
                     .projectId(projectId)
                     .recipientId(assignee.getId())
+                    .recipientEmail(assignee.getEmail())
                     .triggeredByUserId(currentUser.getId())
                     .message("You have been assigned to task: " + task.getTitle())
                     .build());
@@ -118,6 +119,7 @@ public class TaskService {
                     .taskId(savedTask.getId())
                     .projectId(projectId)
                     .recipientId(assignee.getId())
+                    .recipientEmail(assignee.getEmail())
                     .triggeredByUserId(currentUser.getId())
                     .message("You have been assigned to task: " + savedTask.getTitle())
                     .build());

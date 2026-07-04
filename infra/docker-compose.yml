@@ -12,6 +12,19 @@ services:
       - ./postgres_data:/var/lib/postgresql/data
     env_file: .env.docker
 
+  postgres-notifications:
+    image: postgres:16-alpine
+    container_name: projecthub-notifications-db
+    environment:
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_NOTIFICATIONS}
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres_notifications_data:/var/lib/postgresql/data
+    env_file: .env.docker
+
   workhub-api:
     # build:
     #   context: ../backend
@@ -30,6 +43,23 @@ services:
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     depends_on:
       - postgres
+      - rabbitmq
+    env_file: .env.docker
+
+  workhub-notifications:
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-notifications
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL_NOTIFICATIONS=${SPRING_DATASOURCE_URL_NOTIFICATIONS}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres-notifications
       - rabbitmq
     env_file: .env.docker
 

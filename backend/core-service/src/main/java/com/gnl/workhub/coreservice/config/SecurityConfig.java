@@ -49,7 +49,7 @@ public class SecurityConfig {
                         // 2. Instruct Spring to write the token into a cookie named "XSRF-TOKEN"
                         .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                         .csrfTokenRequestHandler(requestHandler)
-                        .ignoringRequestMatchers("/api/v1/auth/**", "/ws")
+                        .ignoringRequestMatchers("/api/v1/auth/**", "/api/v1/internal/**", "/ws")
                 )
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session
@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 1. Public endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/internal/**").permitAll()
                         .requestMatchers("/health").permitAll()
                         .requestMatchers(
                                 "/v3/api-docs/**",

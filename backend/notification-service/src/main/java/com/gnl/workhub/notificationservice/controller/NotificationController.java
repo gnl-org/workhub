@@ -1,11 +1,11 @@
-package com.gnl.workhub.coreservice.controller;
+package com.gnl.workhub.notificationservice.controller;
 
-import com.gnl.workhub.coreservice.dto.NotificationResponse;
-import com.gnl.workhub.coreservice.entity.Notification;
-import com.gnl.workhub.coreservice.repository.NotificationRepository;
-import com.gnl.workhub.coreservice.util.SecurityUtil;
+import com.gnl.workhub.notificationservice.dto.NotificationResponse;
+import com.gnl.workhub.notificationservice.entity.Notification;
+import com.gnl.workhub.notificationservice.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,13 +18,12 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationRepository notificationRepository;
-    private final SecurityUtil securityUtil;
 
     @GetMapping
     public ResponseEntity<List<NotificationResponse>> getNotifications() {
-        var user = securityUtil.getCurrentUser();
+        var userId = getCurrentUserId();
         return ResponseEntity.ok(
-                notificationRepository.findTop30ByUserIdOrderByCreatedAtDesc(user.getId())
+                notificationRepository.findTop30ByUserIdOrderByCreatedAtDesc(userId)
                         .stream()
                         .map(this::toResponse)
                         .toList()
@@ -33,16 +32,16 @@ public class NotificationController {
 
     @GetMapping("/unread-count")
     public ResponseEntity<Map<String, Long>> getUnreadCount() {
-        var user = securityUtil.getCurrentUser();
-        long count = notificationRepository.countByUserIdAndIsRead(user.getId(), false);
+        var userId = getCurrentUserId();
+        long count = notificationRepository.countByUserIdAndIsRead(userId, false);
         return ResponseEntity.ok(Map.of("count", count));
     }
 
     @PatchMapping("/{id}/read")
     public ResponseEntity<Void> markAsRead(@PathVariable UUID id) {
-        var user = securityUtil.getCurrentUser();
+        var userId = getCurrentUserId();
         notificationRepository.findById(id).ifPresent(notification -> {
-            if (notification.getUser().getId().equals(user.getId())) {
+            if (notification.getUserId().equals(userId)) {
                 notification.setRead(true);
                 notificationRepository.save(notification);
             }
@@ -52,8 +51,8 @@ public class NotificationController {
 
     @PatchMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead() {
-        var user = securityUtil.getCurrentUser();
-        var notifications = notificationRepository.findByUserIdAndIsReadOrderByCreatedAtDesc(user.getId(), false);
+        var userId = getCurrentUserId();
+        var notifications = notificationRepository.findByUserIdAndIsReadOrderByCreatedAtDesc(userId, false);
         notifications.forEach(n -> n.setRead(true));
         notificationRepository.saveAll(notifications);
         return ResponseEntity.ok().build();
@@ -64,10 +63,15 @@ public class NotificationController {
                 n.getId(),
                 n.getType(),
                 n.getMessage(),
-                n.getTask() != null ? n.getTask().getId() : null,
-                n.getProject() != null ? n.getProject().getId() : null,
+                n.getTaskId(),
+                n.getProjectId(),
                 n.isRead(),
                 n.getCreatedAt()
         );
+    }
+
+    private UUID getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return UUID.fromString(auth.getName());
     }
 }

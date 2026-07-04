@@ -1,6 +1,6 @@
-package com.gnl.workhub.coreservice.dto;
+package com.gnl.workhub.notificationservice.dto;
 
-import com.gnl.workhub.coreservice.enums.NotificationType;
+import com.gnl.workhub.notificationservice.enums.NotificationType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
