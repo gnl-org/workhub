@@ -72,7 +72,12 @@ public class TaskService {
                 .orElse(-1);
         task.setSortOrder(maxSort + 1);
 
-        // 6. Propagate sprint from work stage (if the stage belongs to a sprint)
+        // 6. Default status to OPEN if not provided
+        if (task.getStatus() == null) {
+            task.setStatus(TaskStatus.OPEN);
+        }
+
+        // 7. Propagate sprint from work stage (if the stage belongs to a sprint)
         if (task.getWorkStage() != null) {
             WorkStage resolvedStage = workStageRepository.findById(task.getWorkStage().getId()).orElse(null);
             if (resolvedStage != null && resolvedStage.getSprint() != null) {
@@ -233,6 +238,10 @@ public class TaskService {
         Task oldState = task.toBuilder().build();
 
         task.setWorkStage(targetStage);
+
+        if (task.getStatus() == null) {
+            task.setStatus(TaskStatus.OPEN);
+        }
 
         if (targetStage.getSprint() != null) {
             task.setSprint(targetStage.getSprint());

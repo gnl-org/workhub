@@ -39,6 +39,8 @@ export const useBacklog = (projectId) => {
       const movedTask = prev.stages.flatMap(s => s.tasks || []).find(t => t.id === taskId);
       if (!movedTask) return prev;
 
+      const targetStage = prev.stages.find(s => s.id === workStageId);
+
       const removeFrom = (stages) => stages.map(s => ({
         ...s,
         tasks: (s.tasks || []).filter(t => t.id !== taskId)
@@ -46,7 +48,15 @@ export const useBacklog = (projectId) => {
 
       const addTo = (stages) => stages.map(s =>
         s.id === workStageId
-          ? { ...s, tasks: [...(s.tasks || []), { ...movedTask, workStageId }] }
+          ? {
+              ...s,
+              tasks: [...(s.tasks || []), {
+                ...movedTask,
+                workStageId,
+                sprintId: targetStage?.sprintId || null,
+                inActiveSprint: targetStage?.sprintStatus === 'ACTIVE'
+              }]
+            }
           : s
       );
 
@@ -54,11 +64,20 @@ export const useBacklog = (projectId) => {
     });
 
     try {
-      await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}/move`, { workStageId });
+      const res = await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}/move`, { workStageId });
+      setBacklog(prev => {
+        const updated = res.data;
+        return {
+          ...prev,
+          stages: prev.stages.map(s => ({
+            ...s,
+            tasks: (s.tasks || []).map(t => t.id === taskId ? { ...t, ...updated } : t)
+          }))
+        };
+      });
       return { success: true };
     } catch (err) {
       setBacklog(prev => ({ ...prev, stages: prevStages }));
-      fetchBacklog();
       return { success: false, error: err.response?.data?.message || 'Failed to move task' };
     }
   };

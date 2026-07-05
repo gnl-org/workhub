@@ -32,7 +32,10 @@ export default function KanbanBoard({ tasks = [], onStatusChange, onTaskClick })
   );
 
   const getTasksByStatus = (status) =>
-    tasks.filter(t => t.status === status);
+    tasks.filter(t => {
+      if (status === 'OPEN') return !t.status || t.status === 'OPEN';
+      return t.status === status;
+    });
 
   const handleDragStart = (event) => {
     const task = tasks.find(t => t.id === event.active.id);

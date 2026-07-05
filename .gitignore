@@ -1,6 +1,7 @@
 # Docker data
 postgres_data/
 postgres_notifications_data/
+postgres_auth_data/
 redis_data/
 
 # Environment files
