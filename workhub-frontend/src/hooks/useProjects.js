@@ -15,7 +15,7 @@ export const useProjects = () => {
     setIsLoading(true);
     setError(false);
     try {
-      const endpoint = user?.role === 'ADMIN' ? '/projects' : '/projects/own';
+      const endpoint = user?.role === 'ADMIN' ? '/api/v1/projects' : '/api/v1/projects/own';
       const res = await api.get(endpoint);
       setProjects(res.data);
     } catch (err) {
@@ -28,7 +28,7 @@ export const useProjects = () => {
   const createProject = async (formData) => {
     setIsSubmitting(true);
     try {
-      const res = await api.post('/projects', formData);
+      const res = await api.post('/api/v1/projects', formData);
       await fetchProjects();
       return { success: true, data: res.data };
     } catch (err) {
@@ -42,10 +42,10 @@ export const useProjects = () => {
   const updateProject = async (id, formData) => {
     setIsSubmitting(true);
     try {
-      const res = await api.patch(`/projects/${id}`, formData);
+      const res = await api.patch(`/api/v1/projects/${id}`, formData);
       // Optional: Update local state if you're on the dashboard
       setProjects(prev => prev.map(p => p.id === id ? res.data : p));
-      await api.patch(`/projects/${id}`, formData);
+      await api.patch(`/api/v1/projects/${id}`, formData);
       return { success: true, data: res.data };
     } catch (err) {
       return { success: false, error: "Update failed" };
@@ -58,7 +58,7 @@ export const useProjects = () => {
   const removeProject = async (id) => {
     setIsSubmitting(true);
     try {
-      await api.delete(`/projects/${id}`);
+      await api.delete(`/api/v1/projects/${id}`);
       setProjects(prev => prev.filter(p => p.id !== id));
       return { success: true };
     } catch (err) {
@@ -72,7 +72,7 @@ export const useProjects = () => {
   const addMemberToProject = async (projectId, userEmail, projectRole = 'MEMBER') => {
     setIsSubmitting(true);
     try {
-      await api.post('/projectMember/addMember', {
+      await api.post('/api/v1/projectMember/addMember', {
         projectId,
         userEmail,
         projectRole
@@ -94,7 +94,7 @@ export const useProjects = () => {
     setIsSubmitting(true);
     try {
       // Assuming a standard REST path if implemented later:
-      // await api.delete(`/projects/${projectId}/members/${memberId}`);
+      // await api.delete(`/api/v1/projects/${projectId}/members/${memberId}`);
       console.warn("Delete member endpoint not yet in API spec");
       return { success: true };
     } catch (err) {
@@ -108,7 +108,7 @@ export const useProjects = () => {
     setIsMembersLoading(true);
     try {
     // Matches your new endpoint: GET /projects/{projectId}/members
-    const res = await api.get(`/projects/${projectId}/members`);
+    const res = await api.get(`/api/v1/projects/${projectId}/members`);
     setMembers(res.data);
     } catch (err) {
     console.error("Failed to fetch members:", err);

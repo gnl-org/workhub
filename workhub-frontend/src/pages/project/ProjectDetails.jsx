@@ -15,7 +15,7 @@ export default function ProjectDetails() {
   const [project, setProject] = useState(null);
 
   useEffect(() => {
-    api.get(`/projects/${projectId}`).then(res => setProject(res.data));
+    api.get(`/api/v1/projects/${projectId}`).then(res => setProject(res.data));
   }, [projectId]);
 
   const tabs = [

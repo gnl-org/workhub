@@ -3,13 +3,6 @@ package com.gnl.workhub.coreservice.entity;
 import com.gnl.workhub.coreservice.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
-import org.jspecify.annotations.Nullable;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -17,12 +10,12 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends BaseEntity implements UserDetails {
+public class User extends BaseEntity {
 
     @Column(unique = true, nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
 
     @Column(name = "full_name")
@@ -30,44 +23,8 @@ public class User extends BaseEntity implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "global_role", nullable = false)
-    private UserRole globalRole = UserRole.USER; // Default value
+    private UserRole globalRole = UserRole.USER;
 
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false; // The "Soft Delete" flag
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Maps our Enum to Spring's "ROLE_USER" format
-        return List.of(new SimpleGrantedAuthority("ROLE_" + globalRole.name()));
-    }
-
-    @Override
-    public @Nullable String getPassword() {
-        return passwordHash;
-    }
-
-    @Override
-    public String getUsername() {
-        return email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    private boolean isDeleted = false;
 }

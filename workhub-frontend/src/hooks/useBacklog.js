@@ -11,7 +11,7 @@ export const useBacklog = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/backlog`);
+      const res = await api.get(`/api/v1/projects/${projectId}/backlog`);
       setBacklog(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load backlog');
@@ -22,7 +22,7 @@ export const useBacklog = (projectId) => {
 
   const moveTask = async (taskId, workStageId, sortOrder) => {
     try {
-      const res = await api.patch(`/projects/${projectId}/tasks/${taskId}/move`, {
+      const res = await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}/move`, {
         workStageId,
         sortOrder
       });
@@ -54,7 +54,7 @@ export const useBacklog = (projectId) => {
     });
 
     try {
-      await api.patch(`/projects/${projectId}/tasks/${taskId}/move`, { workStageId });
+      await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}/move`, { workStageId });
       return { success: true };
     } catch (err) {
       setBacklog(prev => ({ ...prev, stages: prevStages }));
@@ -65,7 +65,7 @@ export const useBacklog = (projectId) => {
 
   const reorderTasks = async (stageId, taskIds) => {
     try {
-      await api.put(`/projects/${projectId}/work-stages/${stageId}/tasks/reorder`, { taskIds });
+      await api.put(`/api/v1/projects/${projectId}/work-stages/${stageId}/tasks/reorder`, { taskIds });
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Failed to reorder tasks' };

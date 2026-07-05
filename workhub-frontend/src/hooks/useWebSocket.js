@@ -7,8 +7,9 @@ export function useWebSocket({ isAuthenticated, onNotification }) {
   useEffect(() => {
     if (!isAuthenticated) return;
 
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const client = new Client({
-      brokerURL: 'ws://localhost:8080/ws',
+      brokerURL: `${protocol}//${window.location.host}/ws`,
       onConnect: () => {
         client.subscribe('/user/queue/notifications', (message) => {
           const notification = JSON.parse(message.body);

@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class BacklogController {
 
     private final TaskService taskService;

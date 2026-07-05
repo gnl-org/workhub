@@ -11,7 +11,7 @@ export const useWorkStages = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/work-stages`);
+      const res = await api.get(`/api/v1/projects/${projectId}/work-stages`);
       setStages(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load stages');
@@ -22,7 +22,7 @@ export const useWorkStages = (projectId) => {
 
   const createStage = async (name) => {
     try {
-      const res = await api.post(`/projects/${projectId}/work-stages`, { name });
+      const res = await api.post(`/api/v1/projects/${projectId}/work-stages`, { name });
       setStages(prev => [...prev, res.data]);
       return { success: true, data: res.data };
     } catch (err) {
@@ -32,7 +32,7 @@ export const useWorkStages = (projectId) => {
 
   const renameStage = async (stageId, name) => {
     try {
-      const res = await api.patch(`/projects/${projectId}/work-stages/${stageId}`, { name });
+      const res = await api.patch(`/api/v1/projects/${projectId}/work-stages/${stageId}`, { name });
       setStages(prev => prev.map(s => s.id === stageId ? res.data : s));
       return { success: true, data: res.data };
     } catch (err) {
@@ -42,7 +42,7 @@ export const useWorkStages = (projectId) => {
 
   const deleteStage = async (stageId) => {
     try {
-      await api.delete(`/projects/${projectId}/work-stages/${stageId}`);
+      await api.delete(`/api/v1/projects/${projectId}/work-stages/${stageId}`);
       setStages(prev => prev.filter(s => s.id !== stageId));
       return { success: true };
     } catch (err) {
@@ -52,7 +52,7 @@ export const useWorkStages = (projectId) => {
 
   const reorderStages = async (stageIds) => {
     try {
-      await api.put(`/projects/${projectId}/work-stages/reorder`, { stageIds });
+      await api.put(`/api/v1/projects/${projectId}/work-stages/reorder`, { stageIds });
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Failed to reorder stages' };

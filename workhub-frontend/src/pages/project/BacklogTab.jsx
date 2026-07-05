@@ -44,7 +44,7 @@ export default function BacklogTab({ projectId }) {
 
   useEffect(() => {
     loadData();
-    api.get(`/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
+    api.get(`/api/v1/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
   }, [projectId, loadData]);
 
   const handleMoveTask = async (taskId, stageId) => {

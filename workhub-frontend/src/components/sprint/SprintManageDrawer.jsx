@@ -23,7 +23,7 @@ export default function SprintManageDrawer({ projectId, sprints, onClose, onStar
       if (goal.trim()) data.goal = goal.trim();
       if (startDate) data.startDate = startDate;
       if (endDate) data.endDate = endDate;
-      const res = await api.post(`/projects/${projectId}/sprints`, data);
+      const res = await api.post(`/api/v1/projects/${projectId}/sprints`, data);
       onCreated?.(res.data);
       setShowCreateForm(false);
       setName('');

@@ -1,9 +1,11 @@
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/NotificationServiceApplication.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/AppConfig.java
-/Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/JwtAuthenticationFilter.java
+/Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/GatewayTokenFilter.java
+/Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/JwtChannelInterceptor.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/JwtService.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/RabbitMQConfig.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/SecurityConfig.java
+/Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/config/WebSocketConfig.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/controller/NotificationController.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/dto/NotificationMessage.java
 /Users/gajendra/apps/fullstack/workhub/backend/notification-service/src/main/java/com/gnl/workhub/notificationservice/dto/NotificationResponse.java

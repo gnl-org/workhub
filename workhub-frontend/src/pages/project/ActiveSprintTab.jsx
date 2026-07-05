@@ -28,7 +28,7 @@ export default function ActiveSprintTab({ projectId }) {
     await fetchSprints();
     if (as) {
       try {
-        const res = await api.get(`/projects/${projectId}/sprints/${as.id}`);
+        const res = await api.get(`/api/v1/projects/${projectId}/sprints/${as.id}`);
         setTasks(res.data.tasks || []);
       } catch (e) {
         setTasks([]);
@@ -38,7 +38,7 @@ export default function ActiveSprintTab({ projectId }) {
 
   useEffect(() => {
     loadData();
-    api.get(`/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
+    api.get(`/api/v1/projects/${projectId}/members`).then(res => setMembers(res.data)).catch(() => {});
   }, [projectId, loadData]);
 
   const handleStartSprint = async (sprintId) => {
@@ -70,7 +70,7 @@ export default function ActiveSprintTab({ projectId }) {
       const as = await fetchActiveSprint();
       if (as) {
         try {
-          const res = await api.get(`/projects/${projectId}/sprints/${as.id}`);
+          const res = await api.get(`/api/v1/projects/${projectId}/sprints/${as.id}`);
           setTasks(res.data.tasks || []);
         } catch (e) {
           setTasks([]);

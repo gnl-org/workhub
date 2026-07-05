@@ -1,8 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
-  // baseURL: 'http://13.61.5.136:8080',
+  baseURL: '',
   withCredentials: true, // Tells Axios to include the HttpOnly cookie automatically
   withXSRFToken: true,
   // Axios will automatically read this cookie name...
@@ -93,9 +92,14 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    // Already on login/register — no need to refresh
+    if (isPublicPath()) {
+      return Promise.reject(error);
+    }
+
     // Already tried refresh once — give up
     if (originalRequest._retry) {
-      if (!isAuthCheckRequest(requestUrl) && !isPublicPath()) {
+      if (!isAuthCheckRequest(requestUrl)) {
         redirectToLogin();
       }
       return Promise.reject(error);

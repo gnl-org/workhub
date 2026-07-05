@@ -26,7 +26,7 @@ export default function TaskDetailModal({ projectId, taskId, isOpen, onClose, on
   useEffect(() => {
     if (!isOpen || !taskId) return;
     setLoading(true);
-    api.get(`/projects/${projectId}/tasks/${taskId}`)
+    api.get(`/api/v1/projects/${projectId}/tasks/${taskId}`)
       .then(res => {
         setTask(res.data);
         setForm({
@@ -55,8 +55,8 @@ export default function TaskDetailModal({ projectId, taskId, isOpen, onClose, on
         storyPoints: form.storyPoints !== '' ? parseInt(form.storyPoints, 10) : null,
         assignedToId: form.assignedToId || null,
       };
-      await api.patch(`/projects/${projectId}/tasks/${taskId}`, body);
-      const res = await api.get(`/projects/${projectId}/tasks/${taskId}`);
+      await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}`, body);
+      const res = await api.get(`/api/v1/projects/${projectId}/tasks/${taskId}`);
       setTask(res.data);
       setForm({
         title: res.data.title,

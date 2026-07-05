@@ -12,7 +12,7 @@ export default function SprintHistoryTab({ projectId }) {
   useEffect(() => {
     if (!projectId) return;
     setIsLoading(true);
-    api.get(`/projects/${projectId}/sprints/history`)
+    api.get(`/api/v1/projects/${projectId}/sprints/history`)
       .then(res => setHistory(res.data))
       .catch(() => {})
       .finally(() => setIsLoading(false));
@@ -27,7 +27,7 @@ export default function SprintHistoryTab({ projectId }) {
     setExpandedId(sprintId);
     setLoadingTasks(true);
     try {
-      const res = await api.get(`/projects/${projectId}/sprints/${sprintId}`);
+      const res = await api.get(`/api/v1/projects/${projectId}/sprints/${sprintId}`);
       setDetailTasks(res.data.tasks || []);
     } catch {
       setDetailTasks([]);

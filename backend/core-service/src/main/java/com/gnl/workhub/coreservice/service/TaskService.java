@@ -72,6 +72,14 @@ public class TaskService {
                 .orElse(-1);
         task.setSortOrder(maxSort + 1);
 
+        // 6. Propagate sprint from work stage (if the stage belongs to a sprint)
+        if (task.getWorkStage() != null) {
+            WorkStage resolvedStage = workStageRepository.findById(task.getWorkStage().getId()).orElse(null);
+            if (resolvedStage != null && resolvedStage.getSprint() != null) {
+                task.setSprint(resolvedStage.getSprint());
+            }
+        }
+
         TaskResponse response = taskMapper.toResponse(taskRepository.save(task));
 
         if (assignee != null) {

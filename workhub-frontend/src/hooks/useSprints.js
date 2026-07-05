@@ -13,7 +13,7 @@ export const useSprints = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/sprints/active`);
+      const res = await api.get(`/api/v1/projects/${projectId}/sprints/active`);
       setActiveSprint(res.data);
       return res.data;
     } catch (err) {
@@ -33,7 +33,7 @@ export const useSprints = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/sprints`);
+      const res = await api.get(`/api/v1/projects/${projectId}/sprints`);
       setSprints(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load sprints');
@@ -47,7 +47,7 @@ export const useSprints = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/sprints/history`);
+      const res = await api.get(`/api/v1/projects/${projectId}/sprints/history`);
       setHistory(res.data);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load sprint history');
@@ -58,7 +58,7 @@ export const useSprints = (projectId) => {
 
   const createSprint = async (data = {}) => {
     try {
-      const res = await api.post(`/projects/${projectId}/sprints`, data);
+      const res = await api.post(`/api/v1/projects/${projectId}/sprints`, data);
       setSprints(prev => [res.data, ...prev]);
       return { success: true, data: res.data };
     } catch (err) {
@@ -68,7 +68,7 @@ export const useSprints = (projectId) => {
 
   const startSprint = async (sprintId) => {
     try {
-      const res = await api.post(`/projects/${projectId}/sprints/${sprintId}/start`);
+      const res = await api.post(`/api/v1/projects/${projectId}/sprints/${sprintId}/start`);
       setActiveSprint(res.data);
       return { success: true, data: res.data };
     } catch (err) {
@@ -79,7 +79,7 @@ export const useSprints = (projectId) => {
 
   const closeSprint = async (sprintId) => {
     try {
-      const res = await api.post(`/projects/${projectId}/sprints/${sprintId}/close`);
+      const res = await api.post(`/api/v1/projects/${projectId}/sprints/${sprintId}/close`);
       setActiveSprint(null);
       return { success: true, data: res.data };
     } catch (err) {
@@ -89,7 +89,7 @@ export const useSprints = (projectId) => {
 
   const assignTasks = async (sprintId, taskIds) => {
     try {
-      await api.post(`/projects/${projectId}/sprints/${sprintId}/tasks`, { taskIds });
+      await api.post(`/api/v1/projects/${projectId}/sprints/${sprintId}/tasks`, { taskIds });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.message || 'Failed to assign tasks' };
@@ -98,7 +98,7 @@ export const useSprints = (projectId) => {
 
   const removeTasks = async (sprintId, taskIds) => {
     try {
-      await api.delete(`/projects/${projectId}/sprints/${sprintId}/tasks`, { data: { taskIds } });
+      await api.delete(`/api/v1/projects/${projectId}/sprints/${sprintId}/tasks`, { data: { taskIds } });
       return { success: true };
     } catch (err) {
       return { success: false, error: err.response?.data?.message || 'Failed to remove tasks' };
@@ -107,7 +107,7 @@ export const useSprints = (projectId) => {
 
   const getSprintDetail = async (sprintId) => {
     try {
-      const res = await api.get(`/projects/${projectId}/sprints/${sprintId}`);
+      const res = await api.get(`/api/v1/projects/${projectId}/sprints/${sprintId}`);
       return res.data;
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load sprint detail');
@@ -123,7 +123,7 @@ export const useSprints = (projectId) => {
 
   const updateTaskStatus = async (taskId, status) => {
     try {
-      const res = await api.patch(`/projects/${projectId}/tasks/${taskId}`, { status });
+      const res = await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}`, { status });
       return { success: true, data: res.data };
     } catch (err) {
       return { success: false, error: err.response?.data?.message || 'Failed to update task' };

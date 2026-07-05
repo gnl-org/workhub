@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/projects")
+@RequestMapping("/api/v1/projects")
 public class ProjectController {
     private final ProjectService projectService;
     private final ProjectMemberService projectMemberService;

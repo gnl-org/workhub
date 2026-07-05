@@ -25,42 +25,17 @@ services:
       - ./postgres_notifications_data:/var/lib/postgresql/data
     env_file: .env.docker
 
-  workhub-api:
-    # build:
-    #   context: ../backend
-    #   dockerfile: Dockerfile
-    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-backend
-
-    ports:
-      - "8080:8080"
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: projecthub-auth-db
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - APP_JWT_SECRET=${APP_JWT_SECRET}
-      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
-      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-    depends_on:
-      - postgres
-      - rabbitmq
-    env_file: .env.docker
-
-  workhub-notifications:
-    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-notifications
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_AUTH}
     ports:
-      - "8081:8081"
-    environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL_NOTIFICATIONS=${SPRING_DATASOURCE_URL_NOTIFICATIONS}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - APP_JWT_SECRET=${APP_JWT_SECRET}
-      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
-      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
-    depends_on:
-      - postgres-notifications
-      - rabbitmq
+      - "5434:5432"
+    volumes:
+      - ./postgres_auth_data:/var/lib/postgresql/data
     env_file: .env.docker
 
   redis:
@@ -73,8 +48,74 @@ services:
     image: rabbitmq:3-management-alpine
     container_name: projecthub-mq
     ports:
-      - "5672:5672"   # AMQP protocol
-      - "15672:15672" # Management UI
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+
+  workhub-gateway:
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+    depends_on:
+      - workhub-core
+      - workhub-auth
+      - workhub-notifications
+    env_file: .env.docker
+
+  workhub-core:
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-backend
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS}
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    env_file: .env.docker
+
+  workhub-auth:
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-auth
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_AUTH}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - JWT_SECRET=${APP_JWT_SECRET}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS}
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres-auth
+      - rabbitmq
+    env_file: .env.docker
+
+  workhub-notifications:
+    image: 527067970531.dkr.ecr.eu-north-1.amazonaws.com/workhub-notifications
+    ports:
+      - "8083:8083"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL_NOTIFICATIONS=${SPRING_DATASOURCE_URL_NOTIFICATIONS}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
+    depends_on:
+      - postgres-notifications
+      - rabbitmq
+    env_file: .env.docker

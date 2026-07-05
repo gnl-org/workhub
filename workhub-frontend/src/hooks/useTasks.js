@@ -13,7 +13,7 @@ export const useTasks = (projectId) => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.get(`/projects/${projectId}/tasks`, {
+      const res = await api.get(`/api/v1/projects/${projectId}/tasks`, {
         params: {
           ...filters,
           page,
@@ -39,7 +39,7 @@ export const useTasks = (projectId) => {
   const createTask = async (taskData) => {
     setIsSubmitting(true);
     try {
-      const res = await api.post(`/projects/${projectId}/tasks`, taskData);
+      const res = await api.post(`/api/v1/projects/${projectId}/tasks`, taskData);
       setTasks(prev => [...prev, res.data]);
       return { success: true, data: res.data };
     } catch (err) {
@@ -52,7 +52,7 @@ export const useTasks = (projectId) => {
   const updateTask = async (taskId, updateData) => {
     setIsSubmitting(true);
     try {
-      const res = await api.patch(`/projects/${projectId}/tasks/${taskId}`, updateData);
+      const res = await api.patch(`/api/v1/projects/${projectId}/tasks/${taskId}`, updateData);
       setTasks(prev => prev.map(t => t.id === taskId ? res.data : t));
       return { success: true, data: res.data };
     } catch (err) {
@@ -64,7 +64,7 @@ export const useTasks = (projectId) => {
 
   const removeTask = async (taskId) => {
     try {
-      await api.delete(`/projects/${projectId}/tasks/${taskId}`);
+      await api.delete(`/api/v1/projects/${projectId}/tasks/${taskId}`);
       setTasks(prev => prev.filter(t => t.id !== taskId));
       return { success: true };
     } catch (err) {

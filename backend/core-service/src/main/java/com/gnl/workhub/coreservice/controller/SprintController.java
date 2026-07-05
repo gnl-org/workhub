@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class SprintController {
 
     private final SprintService sprintService;
