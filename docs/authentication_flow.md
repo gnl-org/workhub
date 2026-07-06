@@ -1,6 +1,6 @@
 # WorkHub Authentication Flow
 
-This document describes how users sign in, stay signed in, and sign out across the React frontend and Spring Boot backend.
+This document describes how users sign in, stay signed in, and sign out across the React frontend and Spring Boot backend services.
 
 For role-based access after login, see [authorization_model.md](./authorization_model.md).
 
@@ -16,7 +16,7 @@ WorkHub uses **stateless JWT authentication** with tokens stored in **HttpOnly c
 | **Refresh token** | Long-lived (24 hours). Used only to get new tokens when the access token expires. |
 | **AuthContext** | Frontend state: who is logged in (`user`, `loading`, `isAuthenticated`). |
 | **axios interceptor** | Handles 401 responses and silent token refresh. |
-| **JwtAuthenticationFilter** | Backend: reads `accessToken` cookie and sets Spring Security context. |
+| **Gateway** | Validates JWT from cookie, strips it, forwards `X-User-*` headers to downstream services. |
 
 ```mermaid
 flowchart LR
@@ -24,16 +24,22 @@ flowchart LR
         UI[React App]
         Cookies[HttpOnly Cookies]
     end
-    subgraph Backend
-        Filter[JwtAuthenticationFilter]
-        Auth[Auth Controller]
-        API[Protected APIs]
+    subgraph Gateway [Gateway :8080]
+        JWT[GatewayTokenFilter]
+        Proxy[ProxyService]
     end
-    UI -->|withCredentials| Auth
-    UI -->|withCredentials| API
+    subgraph Services
+        Auth[Auth Service :8082]
+        Core[Core Service :8081]
+        Notif[Notification Service :8083]
+    end
+    UI -->|withCredentials| Proxy
+    Proxy --> Auth
+    Proxy --> Core
+    Proxy --> Notif
     Auth -->|Set-Cookie| Cookies
-    Cookies -->|auto-sent| Filter
-    Filter --> API
+    Cookies -->|auto-sent| JWT
+    JWT --> Proxy
 ```
 
 ---
@@ -44,7 +50,7 @@ Both tokens are JWTs signed with the same secret (`app.jwt.secret`).
 
 | Token | Cookie name | Lifetime | Claims |
 |-------|-------------|----------|--------|
-| Access | `accessToken` | 15 minutes | `sub` (email), `role`, `fullName` |
+| Access | `accessToken` | 15 minutes | `sub` (email), `userId`, `role`, `fullName` |
 | Refresh | `refreshToken` | 24 hours | `sub` (email) only |
 
 Cookie settings (login, register, refresh):
@@ -54,15 +60,36 @@ Cookie settings (login, register, refresh):
 - `path: /`
 - `sameSite: Lax`
 
-The frontend axios instance uses `withCredentials: true` so cookies are sent on cross-origin requests (e.g. `localhost:5173` → `localhost:8080`). CORS on the backend allows credentials from configured origins (`app.cors.allowed-origins`).
+The frontend axios instance uses `withCredentials: true` so cookies are sent on cross-origin requests (e.g. `localhost:5173` → `localhost:8080`). CORS on the gateway allows credentials from configured origins (`app.cors.allowed-origins`).
 
 CSRF: auth endpoints (`/api/v1/auth/**`) are excluded from CSRF checks. Other mutating requests use the `XSRF-TOKEN` cookie + `X-XSRF-TOKEN` header (configured in axios).
 
 ---
 
+## Service Responsibilities
+
+### Gateway (port 8080)
+
+Entry point for all requests. Validates JWT from `accessToken` cookie, strips the cookie, and forwards:
+- `Authorization: Bearer <jwt>` header
+- `X-User-Id`, `X-User-Email`, `X-User-Role` headers
+- The original request body and path
+
+Auth endpoints (`/api/v1/auth/**`) are proxied to auth-service unchanged (JWT not validated for these).
+
+### Auth Service (port 8082)
+
+Handles all authentication logic: register, login, refresh, logout, `/me`. Sets and clears cookies on its HTTP response, which the gateway proxies back to the browser.
+
+### Downstream Services (Core, Notification)
+
+Trust the `X-User-*` headers set by the gateway. Do not validate JWT themselves. Use `GatewayTokenFilter` to extract user identity from these headers.
+
+---
+
 ## Backend Components
 
-### 1. `AuthenticationController` (`/api/v1/auth`)
+### 1. Auth Service — `AuthenticationController` (`/api/v1/auth`)
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
@@ -74,18 +101,7 @@ CSRF: auth endpoints (`/api/v1/auth/**`) are excluded from CSRF checks. Other mu
 
 All `/api/v1/auth/**` routes are **public** in Spring Security (`permitAll`). Individual handlers still return 401 when appropriate (e.g. `/me` with no valid session).
 
-### 2. `JwtAuthenticationFilter`
-
-Runs on every request:
-
-1. Look for `accessToken` in request cookies.
-2. If missing → continue without authentication (downstream rules apply).
-3. If present → validate JWT, load user, set `SecurityContextHolder`.
-4. Always call `filterChain.doFilter()` (never block the chain here).
-
-Invalid or expired access tokens are ignored; the request continues unauthenticated.
-
-### 3. `AuthenticationService`
+### 2. Auth Service — `AuthenticationService`
 
 - **register / authenticate** — create user (register) or verify credentials, then generate access + refresh JWTs.
 - **refreshAccessToken** — validate refresh JWT, ensure user exists, issue **new** access and refresh tokens (rotation).
@@ -93,14 +109,34 @@ Invalid or expired access tokens are ignored; the request continues unauthentica
 
 Refresh tokens are **stateless** (not stored in DB). Revocation before natural expiry is not supported server-side; logout clears cookies in the browser.
 
-### 4. `SecurityConfig`
+### 3. Gateway — `JwtValidationService`
+
+Validates the JWT from the `accessToken` cookie:
+1. Decode and verify signature using `app.jwt.secret`.
+2. Extract claims: `sub` (email), `userId`, `role`, `fullName`.
+3. Return parsed claims or throw on invalid/expired token.
+
+### 4. Gateway — `GatewayTokenFilter`
+
+Runs on every non-auth request (excludes `/api/v1/auth/**` and `/ws`):
+
+1. Look for `accessToken` in request cookies.
+2. If missing → 401 (auth required).
+3. If present → validate via `JwtValidationService`, inject `X-User-*` headers + `Authorization: Bearer` header.
+4. Forward to downstream service via `ProxyService`.
+
+### 5. Downstream — `GatewayTokenFilter` (each service)
+
+Extracts user identity from gateway headers:
+1. Read `X-User-Id`, `X-User-Email`, `X-User-Role` from request headers.
+2. If present → set `SecurityContextHolder` with these details.
+3. If absent → request continues unauthenticated (rejected by Spring Security rules).
+
+### 6. Auth Service — `SecurityConfig`
 
 - Session policy: **STATELESS** (no server sessions).
 - `/api/v1/auth/**` — public.
-- `/api/v1/management/**` — `ADMIN` only.
-- Everything else — **authenticated** (valid access token required).
-
-401/403 responses are JSON via `SecurityExceptionHandler`.
+- All other endpoints — authenticated with `ADMIN` role (only accessed via gateway proxy with user headers).
 
 ---
 
@@ -168,21 +204,24 @@ Handles **401 Unauthorized** on API responses:
 
 ---
 
-## Flows by Scenario
+## Sequence Diagrams
 
 ### A. Register
 
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant FE as React
-    participant BE as Backend
+    participant FE as React :5173
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     U->>FE: Submit register form
-    FE->>BE: POST /api/v1/auth/register
-    BE->>BE: Create user, generate JWTs
-    BE-->>FE: 200 + UserResponse + Set-Cookie (access + refresh)
-    Note over FE: User typically redirected to login<br/>or can log in separately
+    FE->>GW: POST /api/v1/auth/register
+    GW->>AS: POST /api/v1/auth/register (proxy)
+    AS->>AS: Create user, generate JWTs
+    AS-->>GW: 200 + UserResponse + Set-Cookie
+    GW-->>FE: 200 + UserResponse + Set-Cookie
+    Note over FE: User typically redirected to login
 ```
 
 ### B. Login
@@ -190,18 +229,19 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant FE as React
-    participant BE as Backend
+    participant FE as React :5173
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     U->>FE: Submit login form
-    FE->>BE: POST /api/v1/auth/authenticate
-    BE->>BE: Verify credentials via AuthenticationManager
-    BE-->>FE: 200 + UserResponse + Set-Cookie (access + refresh)
+    FE->>GW: POST /api/v1/auth/authenticate
+    GW->>AS: POST /api/v1/auth/authenticate (proxy)
+    AS->>AS: Verify credentials
+    AS-->>GW: 200 + UserResponse + Set-Cookie (access + refresh)
+    GW-->>FE: 200 + UserResponse + Set-Cookie
     FE->>FE: setUser(res.data)
     FE->>FE: navigate('/') — no second /me call
 ```
-
-Login does **not** call `/me`. User state comes directly from the authenticate response.
 
 ### C. App load / browser refresh (session still valid)
 
@@ -209,12 +249,15 @@ Login does **not** call `/me`. User state comes directly from the authenticate r
 sequenceDiagram
     participant FE as AuthContext
     participant AX as axios
-    participant BE as Backend
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     FE->>AX: GET /api/v1/auth/me (cookies auto-attached)
-    AX->>BE: Request with accessToken cookie
-    BE->>BE: JwtAuthenticationFilter validates token
-    BE-->>AX: 200 UserResponse
+    AX->>GW: Request with accessToken cookie
+    GW->>AS: GET /api/v1/auth/me (proxy, auth routes pass through)
+    AS->>AS: JwtAuthenticationFilter validates token
+    AS-->>GW: 200 UserResponse
+    GW-->>AX: 200 UserResponse
     AX-->>FE: user data
     FE->>FE: setUser(data), loading = false
     Note over FE: PrivateRoute allows access
@@ -226,20 +269,25 @@ sequenceDiagram
 sequenceDiagram
     participant FE as AuthContext
     participant AX as axios interceptor
-    participant BE as Backend
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     FE->>AX: GET /api/v1/auth/me
-    AX->>BE: accessToken expired
-    BE-->>AX: 401
-    AX->>BE: POST /api/v1/auth/refresh (refreshToken cookie)
-    BE-->>AX: 200 + new Set-Cookie tokens
-    AX->>BE: GET /api/v1/auth/me (retry)
-    BE-->>AX: 200 UserResponse
+    AX->>GW: accessToken expired
+    GW->>AS: GET /api/v1/auth/me (proxy)
+    AS-->>GW: 401
+    GW-->>AX: 401
+    AX->>GW: POST /api/v1/auth/refresh (refreshToken cookie)
+    GW->>AS: POST /api/v1/auth/refresh (proxy)
+    AS-->>GW: 200 + new Set-Cookie tokens
+    GW-->>AX: 200 + new Set-Cookie tokens
+    AX->>GW: GET /api/v1/auth/me (retry)
+    GW->>AS: GET /api/v1/auth/me (proxy)
+    AS-->>GW: 200 UserResponse
+    GW-->>AX: 200 UserResponse
     AX-->>FE: user data
     FE->>FE: setUser(data), loading = false
 ```
-
-User sees a brief loading state; refresh is transparent.
 
 ### E. App load with no / invalid session
 
@@ -247,13 +295,18 @@ User sees a brief loading state; refresh is transparent.
 sequenceDiagram
     participant FE as AuthContext
     participant AX as axios
-    participant BE as Backend
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     FE->>AX: GET /api/v1/auth/me
-    AX->>BE: No valid access token
-    BE-->>AX: 401
-    AX->>BE: POST /api/v1/auth/refresh
-    BE-->>AX: 401 (no refresh cookie)
+    AX->>GW: No valid access token
+    GW->>AS: GET /api/v1/auth/me (proxy)
+    AS-->>GW: 401
+    GW-->>AX: 401
+    AX->>GW: POST /api/v1/auth/refresh
+    GW->>AS: POST /api/v1/auth/refresh (proxy)
+    AS-->>GW: 401 (no refresh cookie)
+    GW-->>AX: 401
     AX-->>FE: rejected (no redirect on /me)
     FE->>FE: setUser(null), loading = false
     Note over FE: On protected route → Navigate to /login<br/>On /login → show login form
@@ -263,7 +316,7 @@ sequenceDiagram
 
 Example: fetching projects after 15+ minutes idle.
 
-1. `GET /api/v1/projects` → 401.
+1. `GET /api/v1/projects` → 401 (gateway rejects via GatewayTokenFilter).
 2. Interceptor calls `/refresh` → new cookies.
 3. Original request retried → 200.
 4. If refresh fails → `redirectToLogin()` (full page navigation to `/login`).
@@ -276,11 +329,14 @@ Concurrent 401s share a single refresh: other requests wait in a queue and retry
 sequenceDiagram
     participant U as User
     participant FE as Sidebar + AuthContext
-    participant BE as Backend
+    participant GW as Gateway :8080
+    participant AS as Auth Service :8082
 
     U->>FE: Click logout
-    FE->>BE: POST /api/v1/auth/logout
-    BE-->>FE: 200 + Set-Cookie (clear access, refresh, XSRF)
+    FE->>GW: POST /api/v1/auth/logout
+    GW->>AS: POST /api/v1/auth/logout (proxy)
+    AS-->>GW: 200 + Set-Cookie (clear access, refresh, XSRF)
+    GW-->>FE: 200 + Set-Cookie
     FE->>FE: setUser(null)
     FE->>FE: navigate('/login')
 ```
@@ -292,9 +348,9 @@ sequenceDiagram
 For any non-auth endpoint (e.g. `/api/v1/projects`):
 
 1. Browser sends `accessToken` cookie (and CSRF header on mutating requests).
-2. `JwtAuthenticationFilter` validates JWT and sets authentication.
-3. Spring Security `authorizeHttpRequests` requires authenticated user.
-4. Controller/service uses `SecurityContext` or `@AuthenticationPrincipal` for identity.
+2. Gateway `GatewayTokenFilter` reads the cookie, validates JWT, strips cookie, forwards `Authorization: Bearer` + `X-User-*` headers to the downstream service.
+3. Downstream service's `GatewayTokenFilter` reads `X-User-*` headers and sets Spring Security context.
+4. Spring Security `authorizeHttpRequests` requires authenticated user.
 
 If step 2 fails (no/invalid token) → 401 → frontend interceptor may refresh or redirect.
 
@@ -304,7 +360,7 @@ If step 2 fails (no/invalid token) → 401 → frontend interceptor may refresh 
 
 | Concern | Source of truth |
 |---------|------------------|
-| **Is the user logged in?** (API access) | Valid `accessToken` cookie on the backend |
+| **Is the user logged in?** (API access) | Valid `accessToken` cookie on the gateway |
 | **Who is the user?** (UI display) | `user` in `AuthContext` (from `/me` or login response) |
 | **Can user see a route?** | `PrivateRoute` checks `isAuthenticated` (derived from `user`) |
 
@@ -320,6 +376,7 @@ After login, UI state is optimistic (`setUser` from login). After refresh, UI st
 | Stuck "Loading authentication..." | Queued requests never rejected when refresh failed | `onRefreshFailed()` rejects all queued promises |
 | `/me` treated like a protected API | 401 on `/me` is normal when logged out | `redirectOnFailure: false` for `/me` |
 | Tokens in localStorage | XSS can steal them | Tokens only in HttpOnly cookies; `localStorage` not used for JWTs |
+| Refresh cookie sent to wrong origin | Different ports = different origins; cookie set on 8082 not sent to 8080 | All requests go through gateway on port 8080; auth-service sets cookies on gateway response via proxy |
 
 ---
 
@@ -335,16 +392,31 @@ After login, UI state is optimistic (`setUser` from login). After refresh, UI st
 | `workhub-frontend/src/pages/auth/Login.jsx` | Login form → `/authenticate` |
 | `workhub-frontend/src/components/Sidebar.jsx` | Logout button |
 
-### Backend
+### Gateway
 
 | File | Responsibility |
 |------|----------------|
-| `backend/core-service/.../auth/AuthenticationController.java` | Auth HTTP endpoints, cookie issuance |
-| `backend/core-service/.../auth/AuthenticationService.java` | Register, login, refresh, getMe logic |
-| `backend/core-service/.../service/JwtService.java` | JWT create/validate |
-| `backend/core-service/.../config/JwtAuthenticationFilter.java` | Read access cookie per request |
-| `backend/core-service/.../config/SecurityConfig.java` | CORS, CSRF, route rules |
-| `backend/core-service/src/main/resources/application-dev.properties` | Token TTLs, CORS, JWT secret |
+| `backend/gateway-service/.../config/GatewayTokenFilter.java` | Reads `accessToken` cookie, validates, injects `X-User-*` headers |
+| `backend/gateway-service/.../service/JwtValidationService.java` | JWT decode/validate |
+| `backend/gateway-service/.../service/ProxyService.java` | Forwards requests to downstream services |
+| `backend/gateway-service/.../config/SecurityConfig.java` | Route rules, CORS, CSRF |
+
+### Auth Service
+
+| File | Responsibility |
+|------|----------------|
+| `backend/auth-service/.../controller/AuthenticationController.java` | Auth HTTP endpoints, cookie issuance |
+| `backend/auth-service/.../service/AuthenticationService.java` | Register, login, refresh, getMe logic |
+| `backend/auth-service/.../service/JwtService.java` | JWT create/validate |
+| `backend/auth-service/.../config/JwtAuthenticationFilter.java` | Read access cookie per request |
+| `backend/auth-service/.../config/SecurityConfig.java` | CORS, CSRF, route rules |
+
+### Downstream Services
+
+| File | Responsibility |
+|------|----------------|
+| `backend/core-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway |
+| `backend/notification-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway |
 
 ---
 
