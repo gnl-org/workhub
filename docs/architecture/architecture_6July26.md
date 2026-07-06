@@ -1,52 +1,48 @@
 ```mermaid
 graph TD
     subgraph Clients
-        React[React Web Dashboard :5173]
+        Web[React Web Dashboard]
     end
 
-    subgraph Gateway [API Gateway :8080]
-        MVC[GatewayController<br/>catch-all proxy]
-        WS[WebSocketProxyHandler<br/>STOMP auth injection]
-        JWT[JwtValidationService]
+    subgraph Layer1 [API Gateway]
+        GW[Gateway Service]
     end
 
-    subgraph Backend [Backend Services]
-        Core[Core-Service :8081<br/>Projects, Tasks, Sprints]
-        Auth[Auth-Service :8082<br/>Users, JWT, Login]
-        Notif[Notification-Service :8083<br/>Notifications, WebSocket]
+    subgraph Services [Backend Services]
+        Auth[Auth Service]
+        Core[Core Service]
+        Notif[Notification Service]
     end
 
-    subgraph Data [Databases]
-        PG_Core[PostgreSQL :5432<br/>projecthub]
-        PG_Auth[PostgreSQL :5434<br/>projecthub_auth]
-        PG_Notif[PostgreSQL :5435<br/>projecthub_notifications]
-        Redis[(Redis :6379)]
+    subgraph Bus [Async Bus]
+        Q[RabbitMQ]
     end
 
-    subgraph Messaging [Async Bus]
-        RMQ[RabbitMQ :5672]
+    subgraph Stores [Data Stores]
+        PA[(Auth DB)]
+        R[(Redis)]
+        PC[(Core DB)]
+        PN[(Notif DB)]
     end
 
-    React -->|HTTP| MVC
-    React -->|WS| WS
+    %% Request Flows
+    Web -->|HTTP / REST| GW
+    Web -->|WS / STOMP| GW
 
-    MVC -->|auth routes| Auth
-    MVC -->|notification routes| Notif
-    MVC -->|default route| Core
-    WS -->|proxy| Notif
+    GW -->|REST / JSON| Auth
+    GW -->|REST / JSON| Core
+    GW -->|REST / JSON| Notif
+    GW -->|WS / STOMP| Notif
 
-    Auth -->|SQL| PG_Auth
-    Core -->|SQL| PG_Core
-    Core -->|RESP| Redis
-    Notif -->|SQL| PG_Notif
+    %% Persistence Flows
+    Auth -->|JDBC / SQL| PA
+    Core -->|JDBC / SQL| PC
+    Core -->|RESP Protocol| R
+    Notif -->|JDBC / SQL| PN
 
-    Auth -->|AMQP user.created| RMQ
-    RMQ -->|user.created| Core
-    Core -->|AMQP notifications| RMQ
-    RMQ -->|notifications| Notif
-
-    MVC -->|X-User-Id / Email / Role| Core
-    MVC -->|X-User-Id / Email / Role| Notif
+    %% Async Flows
+    Core -->|AMQP / Events| Q
+    Q -->|AMQP / Events| Notif
 ```
 
 ## Port Layout
@@ -68,7 +64,7 @@ graph TD
 
 - **REST (HTTP)**: Gateway proxies to services by path prefix. Downstream services trust `X-User-*` headers set by gateway.
 - **WebSocket**: Upgraded through gateway at `/ws`. Gateway injects JWT into STOMP CONNECT frame.
-- **Async (RabbitMQ)**: Auth → Core (`user.created`), Core → Notification (notification events).
+- **Async (RabbitMQ)**: Core → Notification (notification events).
 
 ## Security Model
 
