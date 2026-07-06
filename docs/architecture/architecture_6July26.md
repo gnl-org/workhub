@@ -5,8 +5,8 @@ graph TD
     end
 
     subgraph Gateway [API Gateway :8080]
-        MVC[GatewayController<br/>@RequestMapping(&#47;**&#47;)]
-        WS[WebSocketProxyHandler<br/>STOMP Auth Injection]
+        MVC[GatewayController<br/>catch-all proxy]
+        WS[WebSocketProxyHandler<br/>STOMP auth injection]
         JWT[JwtValidationService]
     end
 
@@ -27,31 +27,26 @@ graph TD
         RMQ[RabbitMQ :5672]
     end
 
-    %% Frontend → Gateway
-    React -->|HTTP /api/*| MVC
-    React -->|WS /ws| WS
+    React -->|HTTP| MVC
+    React -->|WS| WS
 
-    %% Gateway → Backend
-    MVC -->|HTTP /api/v1/auth/*| Auth
-    MVC -->|HTTP /api/v1/notifications/*| Notif
-    MVC -->|HTTP /* (default)| Core
-    WS -->|WS ws://localhost:8083/ws| Notif
+    MVC -->|auth routes| Auth
+    MVC -->|notification routes| Notif
+    MVC -->|default route| Core
+    WS -->|proxy| Notif
 
-    %% Backend → Databases
     Auth -->|SQL| PG_Auth
     Core -->|SQL| PG_Core
     Core -->|RESP| Redis
     Notif -->|SQL| PG_Notif
 
-    %% Messaging
     Auth -->|AMQP user.created| RMQ
     RMQ -->|user.created| Core
-    Core -->|AMQP notification.*| RMQ
-    RMQ -->|notification.*| Notif
+    Core -->|AMQP notifications| RMQ
+    RMQ -->|notifications| Notif
 
-    %% Auth Flow
-    MVC -->|JWT cookie + X-User-* headers| Core
-    MVC -->|JWT cookie + X-User-* headers| Notif
+    MVC -->|X-User-Id / Email / Role| Core
+    MVC -->|X-User-Id / Email / Role| Notif
 ```
 
 ## Port Layout
