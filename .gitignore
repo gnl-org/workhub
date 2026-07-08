@@ -14,7 +14,7 @@ infra/.env.docker.local
 reports/
 
 # Maven build output
-target/
+**/target/
 
 # opencode personal instructions
 .opencode/instructions.md

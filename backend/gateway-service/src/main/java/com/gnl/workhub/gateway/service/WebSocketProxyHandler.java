@@ -3,18 +3,27 @@ package com.gnl.workhub.gateway.service;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
+import org.springframework.web.socket.WebSocketHttpHeaders;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
+import org.springframework.web.socket.SubProtocolCapable;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-public class WebSocketProxyHandler extends TextWebSocketHandler {
+public class WebSocketProxyHandler extends TextWebSocketHandler implements SubProtocolCapable {
 
     private final Map<String, WebSocketSession> backendSessions = new ConcurrentHashMap<>();
+
+    @Override
+    public List<String> getSubProtocols() {
+        return List.of("v12.stomp");
+    }
 
     @Override
     public void afterConnectionEstablished(WebSocketSession frontendSession) throws Exception {
@@ -25,22 +34,39 @@ public class WebSocketProxyHandler extends TextWebSocketHandler {
         }
 
         var client = new StandardWebSocketClient();
+        var headers = new WebSocketHttpHeaders();
+        headers.add("Authorization", "Bearer " + jwt);
         var backendSession = client.execute(
-                new TextWebSocketHandler() {
-                    @Override
-                    protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-                        try { frontendSession.sendMessage(message); } catch (IOException ignored) {}
-                    }
-
-                    @Override
-                    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
-                        try { frontendSession.close(status); } catch (IOException ignored) {}
-                    }
-                },
-                "ws://localhost:8083/ws"
+                new BackendWebSocketHandler(frontendSession),
+                headers,
+                new URI("ws://localhost:8083/ws")
         ).get();
 
         backendSessions.put(frontendSession.getId(), backendSession);
+    }
+
+    private class BackendWebSocketHandler extends TextWebSocketHandler implements SubProtocolCapable {
+
+        private final WebSocketSession frontendSession;
+
+        BackendWebSocketHandler(WebSocketSession frontendSession) {
+            this.frontendSession = frontendSession;
+        }
+
+        @Override
+        public List<String> getSubProtocols() {
+            return List.of("v12.stomp");
+        }
+
+        @Override
+        protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+            try { frontendSession.sendMessage(message); } catch (IOException ignored) {}
+        }
+
+        @Override
+        public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+            try { frontendSession.close(status); } catch (IOException ignored) {}
+        }
     }
 
     @Override

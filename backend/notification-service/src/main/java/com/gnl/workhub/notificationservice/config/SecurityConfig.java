@@ -40,6 +40,8 @@ public class SecurityConfig {
                 )
                 .addFilterBefore(gatewayTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // TODO: Replace .permitAll() with service-to-service auth (e.g., GatewayTokenFilter) so /ws is not open to all
+                        .requestMatchers("/ws").permitAll()
                         .anyRequest().authenticated()
                 );
 

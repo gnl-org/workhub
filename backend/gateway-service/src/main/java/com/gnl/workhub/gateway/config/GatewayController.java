@@ -13,9 +13,8 @@ public class GatewayController {
 
     private final ProxyService proxyService;
 
-    @RequestMapping("/**")
+    @RequestMapping("/api/**")
     public ResponseEntity<?> handle(HttpServletRequest request) {
-        System.out.println("GATEWAY HIT: " + request.getMethod() + " " + request.getRequestURI());
         try {
             return proxyService.forward(request);
         } catch (Exception e) {

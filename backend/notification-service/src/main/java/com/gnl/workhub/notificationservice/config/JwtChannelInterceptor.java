@@ -20,6 +20,19 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
     @Value("${app.jwt.secret}")
     private String secretKey;
 
+    public String validateToken(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getSubject();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
@@ -27,17 +40,9 @@ public class JwtChannelInterceptor implements ChannelInterceptor {
             String auth = accessor.getFirstNativeHeader("Authorization");
             if (auth != null && auth.startsWith("Bearer ")) {
                 String token = auth.substring(7);
-                try {
-                    Claims claims = Jwts.parser()
-                            .verifyWith(getSignInKey())
-                            .build()
-                            .parseSignedClaims(token)
-                            .getPayload();
-                    String email = claims.getSubject();
-                    if (email != null) {
-                        accessor.setUser(() -> email);
-                    }
-                } catch (Exception ignored) {
+                String email = validateToken(token);
+                if (email != null) {
+                    accessor.setUser(() -> email);
                 }
             }
         }
