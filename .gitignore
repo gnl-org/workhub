@@ -13,5 +13,8 @@ infra/.env.docker.local
 # Performance test artifacts
 reports/
 
+# Maven build output
+target/
+
 # opencode personal instructions
 .opencode/instructions.md
