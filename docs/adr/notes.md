@@ -5,17 +5,17 @@ _Not ADRs — observations and gotchas to check when working on this project._
 ## JWT & Principal
 
 - **`Principal.getName()` returns email** (from JWT `sub` claim). WebSocket user destination matching (`/user/queue/notifications`) uses email, not UUID. All services must agree on this.
-- **`JwtService.generateToken()`** includes claims: `userId` (UUID), `role`, `fullName`, `sub` (email). Same structure used by auth-service, gateway `JwtValidationService`, and notification-service `JwtChannelInterceptor`.
 - **Auth-service `User` entity does NOT implement `UserDetails`**. Instead uses `org.springframework.security.core.userdetails.User` via `User.withUsername()` in `AuthenticationService`.
+
+## WebSocket vs SSE
+
+- **SSE would be simpler** for current scope. Notifications only need server → client pushes. WebSocket/STOMP was overengineered but in place now.
+- If adding real-time collaboration (docs, chat, live boards), WebSocket becomes necessary (client needs to push too).
 
 ## Configuration & Secrets
 
 - **`.env` files** must be at `backend/<service>/.env`. Loaded by `loadDotenv()` in each `main()` with fallback paths for different working directories (IDE vs terminal).
-- **`notification-service/application-dev.properties`** still has a hardcoded JWT secret:
-  ```
-  app.jwt.secret=qPsJuSuX7rPS7oAGcR8NOHDSi/r5w8UsyPcJ3Jm7znE=
-  ```
-  Security concern — dev only, but should use `${JWT_SECRET}` like the other services.
+- **Notification-service no longer validates JWT** — it trusts `X-User-*` headers from gateway, same as core-service.
 
 ## Spring Boot 4.x Specifics
 

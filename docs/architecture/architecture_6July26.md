@@ -63,7 +63,7 @@ graph TD
 ## Communication Patterns
 
 - **REST (HTTP)**: Gateway proxies to services by path prefix. Downstream services trust `X-User-*` headers set by gateway.
-- **WebSocket**: Upgraded through gateway at `/ws`. Gateway injects JWT into STOMP CONNECT frame.
+- **WebSocket**: Upgraded through gateway at `/ws`. Gateway passes JWT and `X-User-*` headers during upgrade. Notification-service `HandshakeHandler` reads `X-User-Email` to set STOMP principal. Overengineered for current scope — SSE would be simpler (only notifications need real-time pushes, and client never sends data back).
 - **Async (RabbitMQ)**: Core → Notification (notification events).
 
 ## Security Model
