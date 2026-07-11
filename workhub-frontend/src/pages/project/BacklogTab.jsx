@@ -276,6 +276,7 @@ export default function BacklogTab({ projectId }) {
         onCreate={handleCreateTask}
         stages={backlog.stages}
         members={members}
+        projectId={projectId}
       />
 
       <TaskDetailModal

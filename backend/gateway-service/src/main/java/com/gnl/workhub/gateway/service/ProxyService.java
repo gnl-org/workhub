@@ -69,12 +69,10 @@ public class ProxyService {
 
                 InputStream body = response.getBody();
                 byte[] respBodyBytes = body != null ? body.readAllBytes() : new byte[0];
-                String respBody = respBodyBytes.length > 0
-                        ? new String(respBodyBytes, StandardCharsets.UTF_8) : null;
 
                 return ResponseEntity.status(status)
                         .headers(filterHopByHopHeaders(respHeaders))
-                        .body(respBody);
+                        .body(respBodyBytes.length > 0 ? respBodyBytes : null);
             });
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(Map.of(

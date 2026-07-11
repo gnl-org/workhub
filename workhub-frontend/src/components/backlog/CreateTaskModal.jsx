@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { Upload, Loader2, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axios';
 import Modal from '../Modal';
 
 const TASK_TYPES = ['TASK', 'BUG', 'STORY', 'EPIC', 'SUB_TASK'];
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
-export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, members }) {
+export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, members, projectId }) {
   const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -14,8 +16,10 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, mem
   const [storyPoints, setStoryPoints] = useState('');
   const [assignedToId, setAssignedToId] = useState(user?.id || '');
   const [stageId, setStageId] = useState(stages?.[0]?.id || '');
+  const [files, setFiles] = useState([]);
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,17 +36,40 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, mem
       workStageId: stageId || undefined,
     });
     if (result.success) {
+      const taskId = result.data.id;
+      if (files.length > 0 && taskId && projectId) {
+        for (const file of files) {
+          try {
+            const formData = new FormData();
+            formData.append('file', file);
+            await api.post(`/api/v1/projects/${projectId}/tasks/${taskId}/files`, formData);
+          } catch {
+            // ignore individual file failures
+          }
+        }
+      }
       setTitle('');
       setDescription('');
       setTaskType('TASK');
       setPriority('MEDIUM');
       setStoryPoints('');
       setAssignedToId('');
+      setFiles([]);
       onClose();
     } else {
       setError(result.error);
     }
     setSubmitting(false);
+  };
+
+  const handleFileSelect = (e) => {
+    const selected = Array.from(e.target.files || []);
+    setFiles(prev => [...prev, ...selected]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -149,6 +176,37 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, mem
           </select>
         </div>
 
+        <div>
+          <label className="block text-sm font-bold text-slate-700 mb-1">Files</label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition w-full border border-dashed border-slate-200"
+          >
+            <Upload size={14} />
+            {files.length > 0 ? `${files.length} file(s) selected` : 'Add files'}
+          </button>
+          {files.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {files.map((f, i) => (
+                <div key={i} className="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-1.5">
+                  <span className="text-xs text-slate-600 truncate">{f.name}</span>
+                  <button type="button" onClick={() => removeFile(i)} className="p-0.5 hover:text-red-500 text-slate-400">
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-end gap-3">
           <button
             type="button"
@@ -160,8 +218,9 @@ export default function CreateTaskModal({ isOpen, onClose, onCreate, stages, mem
           <button
             type="submit"
             disabled={submitting || !title.trim()}
-            className="px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition disabled:opacity-50"
           >
+            {submitting ? <Loader2 size={14} className="animate-spin" /> : null}
             {submitting ? 'Creating...' : 'Create Task'}
           </button>
         </div>

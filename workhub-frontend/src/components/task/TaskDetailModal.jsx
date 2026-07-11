@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { X, Save, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { X, Save, Loader2, Paperclip, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../api/axios';
 
@@ -22,26 +22,66 @@ export default function TaskDetailModal({ projectId, taskId, isOpen, onClose, on
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const [files, setFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen || !taskId) return;
     setLoading(true);
-    api.get(`/api/v1/projects/${projectId}/tasks/${taskId}`)
-      .then(res => {
-        setTask(res.data);
+    Promise.all([
+      api.get(`/api/v1/projects/${projectId}/tasks/${taskId}`),
+      api.get(`/api/v1/projects/${projectId}/tasks/${taskId}/files`),
+    ])
+      .then(([taskRes, filesRes]) => {
+        setTask(taskRes.data);
         setForm({
-          title: res.data.title,
-          description: res.data.description || '',
-          status: res.data.status,
-          priority: res.data.priority,
-          taskType: res.data.taskType,
-          storyPoints: res.data.storyPoints ?? '',
-          assignedToId: res.data.assignee?.id || '',
+          title: taskRes.data.title,
+          description: taskRes.data.description || '',
+          status: taskRes.data.status,
+          priority: taskRes.data.priority,
+          taskType: taskRes.data.taskType,
+          storyPoints: taskRes.data.storyPoints ?? '',
+          assignedToId: taskRes.data.assignee?.id || '',
         });
+        setFiles(filesRes.data || []);
       })
       .catch(() => setTask(null))
       .finally(() => setLoading(false));
   }, [projectId, taskId, isOpen]);
+
+  const handleUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post(`/api/v1/projects/${projectId}/tasks/${taskId}/files`, formData);
+      setFiles(prev => [res.data, ...prev]);
+    } catch {
+      // ignore
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteFile = async (fileId) => {
+    try {
+      await api.delete(`/api/v1/files/${fileId}`);
+      setFiles(prev => prev.filter(f => f.id !== fileId));
+    } catch {
+      // ignore
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -293,6 +333,62 @@ export default function TaskDetailModal({ projectId, taskId, isOpen, onClose, on
                 </div>
               </div>
             )}
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h5 className="text-xs font-bold text-slate-400 uppercase">
+                  Files ({files.length})
+                </h5>
+                <div className="flex items-center gap-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleUpload}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 rounded-lg transition disabled:opacity-50"
+                  >
+                    {uploading ? <Loader2 size={12} className="animate-spin" /> : <Upload size={12} />}
+                    {uploading ? 'Uploading...' : 'Upload'}
+                  </button>
+                </div>
+              </div>
+              {files.length === 0 ? (
+                <p className="text-xs text-slate-400">No files</p>
+              ) : (
+                <div className="space-y-1.5">
+                  {files.map(f => (
+                    <div key={f.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
+                      <a
+                        href={`/api/v1/files/${f.id}/download`}
+                        className={`flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline min-w-0 ${f.mimeType?.startsWith('image/') ? 'w-full' : ''}`}
+                      >
+                        {f.mimeType?.startsWith('image/') ? (
+                          <img
+                            src={`/api/v1/files/${f.id}/preview`}
+                            alt={f.fileName}
+                            className="w-10 h-10 rounded-lg object-cover shrink-0"
+                          />
+                        ) : (
+                          <Paperclip size={14} className="shrink-0" />
+                        )}
+                        <span className="truncate">{f.fileName}</span>
+                        <span className="text-[10px] text-slate-400 shrink-0">({formatFileSize(f.fileSize)})</span>
+                      </a>
+                      <button
+                        onClick={() => handleDeleteFile(f.id)}
+                        className="p-1 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition shrink-0 ml-2"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
