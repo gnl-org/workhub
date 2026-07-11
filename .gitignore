@@ -16,5 +16,8 @@ reports/
 # Maven build output
 **/target/
 
+# ignore files uploaded locally during development
+uploads/
+
 # opencode personal instructions
 .opencode/instructions.md
