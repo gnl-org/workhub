@@ -16,27 +16,30 @@ WorkHub uses **stateless JWT authentication** with tokens stored in **HttpOnly c
 | **Refresh token** | Long-lived (24 hours). Used only to get new tokens when the access token expires. |
 | **AuthContext** | Frontend state: who is logged in (`user`, `loading`, `isAuthenticated`). |
 | **axios interceptor** | Handles 401 responses and silent token refresh. |
-| **Gateway** | Validates JWT from cookie, strips it, forwards `X-User-*` headers to downstream services. |
+| **Gateway** | Validates JWT from cookie, forwards `X-User-*` headers to downstream services for HTTP and WebSocket. |
 
 ```mermaid
 flowchart LR
     subgraph Browser
         UI[React App]
+        WS[STOMP Client]
         Cookies[HttpOnly Cookies]
     end
     subgraph Gateway [Gateway :8080]
-        JWT[GatewayTokenFilter]
         Proxy[ProxyService]
+        WSH[WebSocketProxyHandler]
+        JWT[ProxyService / JwtHandshakeInterceptor]
     end
     subgraph Services
         Auth[Auth Service :8082]
         Core[Core Service :8081]
         Notif[Notification Service :8083]
     end
-    UI -->|withCredentials| Proxy
+    UI -->|HTTP /api/* withCredentials| Proxy
     Proxy --> Auth
     Proxy --> Core
-    Proxy --> Notif
+    WS -->|WS /ws| WSH
+    WSH -->|WS proxy + X-User-* headers| Notif
     Auth -->|Set-Cookie| Cookies
     Cookies -->|auto-sent| JWT
     JWT --> Proxy
@@ -111,26 +114,44 @@ Refresh tokens are **stateless** (not stored in DB). Revocation before natural e
 
 ### 3. Gateway — `JwtValidationService`
 
-Validates the JWT from the `accessToken` cookie:
+Validates the JWT from the `accessToken` cookie or `Authorization` header:
 1. Decode and verify signature using `app.jwt.secret`.
 2. Extract claims: `sub` (email), `userId`, `role`, `fullName`.
 3. Return parsed claims or throw on invalid/expired token.
 
-### 4. Gateway — `GatewayTokenFilter`
+### 4. Gateway — HTTP request flow (`ProxyService`)
 
-Runs on every non-auth request (excludes `/api/v1/auth/**` and `/ws`):
+Runs on every `/api/**` request:
 
-1. Look for `accessToken` in request cookies.
-2. If missing → 401 (auth required).
+1. Look for `accessToken` in request cookies or `Authorization` header.
+2. If missing and path is NOT `/api/v1/auth/**` → 401.
 3. If present → validate via `JwtValidationService`, inject `X-User-*` headers + `Authorization: Bearer` header.
-4. Forward to downstream service via `ProxyService`.
+4. Forward to downstream service (auth → 8082, notifications → 8083, core → default).
 
-### 5. Downstream — `GatewayTokenFilter` (each service)
+Auth endpoints (`/api/v1/auth/**`) are proxied to auth-service without JWT validation.
 
-Extracts user identity from gateway headers:
+### 5. Gateway — WebSocket flow (`JwtHandshakeInterceptor` + `WebSocketProxyHandler`)
+
+1. Browser opens `ws://localhost:5173/ws` → Vite proxy → gateway port 8080.
+2. `JwtHandshakeInterceptor.beforeHandshake()` reads `accessToken` from cookie, validates via `JwtValidationService`, stores `jwt`, `userEmail`, `userId`, `userRole` in session attributes.
+3. `WebSocketProxyHandler.afterConnectionEstablished()` reads these attributes, opens a backend WebSocket to notification-service (`ws://localhost:8083/ws`), passing `Authorization: Bearer <jwt>` and `X-User-Email`, `X-User-Id`, `X-User-Role` as HTTP upgrade headers.
+4. All subsequent STOMP frames are proxied bidirectionally between browser and notification-service.
+
+### 6. Downstream — `GatewayTokenFilter` (each service, HTTP only)
+
+Extracts user identity from gateway headers on HTTP requests:
 1. Read `X-User-Id`, `X-User-Email`, `X-User-Role` from request headers.
 2. If present → set `SecurityContextHolder` with these details.
 3. If absent → request continues unauthenticated (rejected by Spring Security rules).
+
+### 7. Notification Service — WebSocket `HandshakeHandler`
+
+During the backend WebSocket upgrade (gateway → notification-service):
+
+1. `WebSocketConfig.registerStompEndpoints()` registers a custom `DefaultHandshakeHandler`.
+2. `determineUser()` reads `X-User-Email` from the HTTP upgrade headers (set by gateway).
+3. Returns `() -> email` as the STOMP principal.
+4. Spring's `StompSubProtocolHandler` registers the user session in `SimpUserRegistry` using this principal, enabling `convertAndSendToUser()` to find and deliver notifications in real time.
 
 ### 6. Auth Service — `SecurityConfig`
 
@@ -396,10 +417,13 @@ After login, UI state is optimistic (`setUser` from login). After refresh, UI st
 
 | File | Responsibility |
 |------|----------------|
-| `backend/gateway-service/.../config/GatewayTokenFilter.java` | Reads `accessToken` cookie, validates, injects `X-User-*` headers |
 | `backend/gateway-service/.../service/JwtValidationService.java` | JWT decode/validate |
-| `backend/gateway-service/.../service/ProxyService.java` | Forwards requests to downstream services |
-| `backend/gateway-service/.../config/SecurityConfig.java` | Route rules, CORS, CSRF |
+| `backend/gateway-service/.../service/ProxyService.java` | Forwards HTTP requests to downstream services with `X-User-*` headers |
+| `backend/gateway-service/.../service/JwtHandshakeInterceptor.java` | Validates JWT on WebSocket upgrade, stores claims in session |
+| `backend/gateway-service/.../service/WebSocketProxyHandler.java` | Proxies WebSocket frames to notification-service with `X-User-*` headers |
+| `backend/gateway-service/.../config/WebSocketProxyConfig.java` | Registers `/ws` WebSocket endpoint |
+| `backend/gateway-service/.../config/GatewayController.java` | Catch-all for `/api/**` routes, delegates to `ProxyService` |
+| `backend/gateway-service/.../config/CorsConfig.java` | CORS configuration |
 
 ### Auth Service
 
@@ -415,8 +439,9 @@ After login, UI state is optimistic (`setUser` from login). After refresh, UI st
 
 | File | Responsibility |
 |------|----------------|
-| `backend/core-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway |
-| `backend/notification-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway |
+| `backend/core-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway (HTTP) |
+| `backend/notification-service/.../config/GatewayTokenFilter.java` | Reads `X-User-*` headers from gateway (HTTP) |
+| `backend/notification-service/.../config/WebSocketConfig.java` | Sets STOMP principal from `X-User-Email` header on WebSocket upgrade |
 
 ---
 
