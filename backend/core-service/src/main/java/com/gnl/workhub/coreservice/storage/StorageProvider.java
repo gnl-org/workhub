@@ -8,4 +8,5 @@ public interface StorageProvider {
     String store(String storedName, MultipartFile file);
     Resource load(String filePath);
     void delete(String filePath);
+    String generateUrl(String filePath, String fileName);
 }

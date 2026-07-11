@@ -1,5 +1,6 @@
 package com.gnl.workhub.coreservice.controller;
 
+import com.gnl.workhub.coreservice.dto.FileResource;
 import com.gnl.workhub.coreservice.dto.FileStorageDto;
 import com.gnl.workhub.coreservice.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
@@ -38,36 +39,16 @@ public class FileStorageController {
         return ResponseEntity.ok(fileStorageService.getFiles(taskId));
     }
 
-    @GetMapping("/api/v1/files/{id}/preview")
-    public ResponseEntity<Resource> previewFile(@PathVariable UUID id) {
-        Resource resource = fileStorageService.downloadFile(id);
-
-        String contentType = "application/octet-stream";
-        try {
-            contentType = resource.getURL().openConnection().getContentType();
-        } catch (Exception ignored) {}
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "inline; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
-    }
-
     @GetMapping("/api/v1/files/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable UUID id) {
-        Resource resource = fileStorageService.downloadFile(id);
-
-        String contentType = "application/octet-stream";
-        try {
-            contentType = resource.getURL().openConnection().getContentType();
-        } catch (Exception ignored) {}
+        FileResource fr = fileStorageService.downloadFile(id);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
+                .contentType(MediaType.parseMediaType(
+                        fr.contentType() != null ? fr.contentType() : "application/octet-stream"))
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + resource.getFilename() + "\"")
-                .body(resource);
+                        "inline; filename=\"" + fr.filename() + "\"")
+                .body(fr.resource());
     }
 
     @DeleteMapping("/api/v1/files/{id}")

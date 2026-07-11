@@ -11,6 +11,7 @@ public sealed interface FileStorageDto {
             String mimeType,
             long fileSize,
             String uploadedByName,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            String url
     ) implements FileStorageDto {}
 }

@@ -363,12 +363,13 @@ export default function TaskDetailModal({ projectId, taskId, isOpen, onClose, on
                   {files.map(f => (
                     <div key={f.id} className="flex items-center justify-between bg-slate-50 rounded-xl px-3 py-2">
                       <a
-                        href={`/api/v1/files/${f.id}/download`}
+                        href={f.url}
+                        download={f.fileName}
                         className={`flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 hover:underline min-w-0 ${f.mimeType?.startsWith('image/') ? 'w-full' : ''}`}
                       >
                         {f.mimeType?.startsWith('image/') ? (
                           <img
-                            src={`/api/v1/files/${f.id}/preview`}
+                            src={f.url}
                             alt={f.fileName}
                             className="w-10 h-10 rounded-lg object-cover shrink-0"
                           />

@@ -64,4 +64,9 @@ public class LocalStorageProvider implements StorageProvider {
             Files.deleteIfExists(path);
         } catch (IOException ignored) {}
     }
+
+    @Override
+    public String generateUrl(String filePath, String fileName) {
+        return null;
+    }
 }
