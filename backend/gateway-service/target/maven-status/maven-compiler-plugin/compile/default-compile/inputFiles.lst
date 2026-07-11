@@ -1,9 +1,0 @@
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/GatewayApplication.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/config/AppConfig.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/config/CorsConfig.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/config/GatewayController.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/config/WebSocketProxyConfig.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/service/JwtHandshakeInterceptor.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/service/JwtValidationService.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/service/ProxyService.java
-/Users/gajendra/apps/fullstack/workhub/backend/gateway-service/src/main/java/com/gnl/workhub/gateway/service/WebSocketProxyHandler.java

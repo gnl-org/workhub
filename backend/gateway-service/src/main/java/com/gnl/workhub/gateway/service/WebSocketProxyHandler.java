@@ -33,9 +33,16 @@ public class WebSocketProxyHandler extends TextWebSocketHandler implements SubPr
             return;
         }
 
+        var userEmail = (String) frontendSession.getAttributes().get("userEmail");
+        var userId = (String) frontendSession.getAttributes().get("userId");
+        var userRole = (String) frontendSession.getAttributes().get("userRole");
+
         var client = new StandardWebSocketClient();
         var headers = new WebSocketHttpHeaders();
         headers.add("Authorization", "Bearer " + jwt);
+        if (userEmail != null) headers.add("X-User-Email", userEmail);
+        if (userId != null) headers.add("X-User-Id", userId);
+        if (userRole != null) headers.add("X-User-Role", userRole);
         var backendSession = client.execute(
                 new BackendWebSocketHandler(frontendSession),
                 headers,
