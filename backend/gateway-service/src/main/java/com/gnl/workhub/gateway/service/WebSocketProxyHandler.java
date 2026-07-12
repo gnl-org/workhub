@@ -1,5 +1,6 @@
 package com.gnl.workhub.gateway.service;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
@@ -17,6 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class WebSocketProxyHandler extends TextWebSocketHandler implements SubProtocolCapable {
+
+    @Value("${app.service.notifications-ws-url:ws://localhost:8083/ws}")
+    private String notificationsWsUrl;
 
     private final Map<String, WebSocketSession> backendSessions = new ConcurrentHashMap<>();
 
@@ -46,7 +50,7 @@ public class WebSocketProxyHandler extends TextWebSocketHandler implements SubPr
         var backendSession = client.execute(
                 new BackendWebSocketHandler(frontendSession),
                 headers,
-                new URI("ws://localhost:8083/ws")
+                new URI(notificationsWsUrl)
         ).get();
 
         backendSessions.put(frontendSession.getId(), backendSession);

@@ -16,6 +16,10 @@ services:
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx256m
       - APP_JWT_SECRET=${APP_JWT_SECRET}
+      - APP_SERVICE_AUTH_URL=http://workhub-auth:8082
+      - APP_SERVICE_NOTIFICATIONS_URL=http://workhub-notifications:8083
+      - APP_SERVICE_CORE_URL=http://workhub-core:8081
+      - APP_SERVICE_NOTIFICATIONS_WS_URL=ws://workhub-notifications:8083/ws
     depends_on:
       - workhub-core
       - workhub-auth

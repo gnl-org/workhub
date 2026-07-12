@@ -3,6 +3,7 @@ package com.gnl.workhub.gateway.service;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,15 @@ public class ProxyService {
 
     private final RestTemplate restTemplate;
     private final JwtValidationService jwtService;
+
+    @Value("${app.service.auth-url:http://localhost:8082}")
+    private String authServiceUrl;
+
+    @Value("${app.service.notifications-url:http://localhost:8083}")
+    private String notificationsServiceUrl;
+
+    @Value("${app.service.core-url:http://localhost:8081}")
+    private String coreServiceUrl;
 
     public ResponseEntity<?> forward(HttpServletRequest request) {
         String path = request.getRequestURI();
@@ -90,15 +100,15 @@ public class ProxyService {
 
     private String resolveTarget(String path, String method) {
         if (path.startsWith("/api/v1/auth")) {
-            return "http://localhost:8082";
+            return authServiceUrl;
         }
         if (path.startsWith("/api/v1/notifications")) {
-            return "http://localhost:8083";
+            return notificationsServiceUrl;
         }
         if (path.startsWith("/ws")) {
             return null;
         }
-        return "http://localhost:8081";
+        return coreServiceUrl;
     }
 
     private String extractJwt(HttpServletRequest request) {
