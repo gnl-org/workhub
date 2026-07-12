@@ -12,23 +12,32 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class ProxyService {
+
+    private static final Pattern SAFE_PATH_PATTERN = Pattern.compile("^/[A-Za-z0-9/_\\-.]*$");
 
     private final RestTemplate restTemplate;
     private final JwtValidationService jwtService;
 
     public ResponseEntity<?> forward(HttpServletRequest request) {
         String path = request.getRequestURI();
+        String safePath = sanitizeForwardPath(path);
+        if (safePath == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "error", "Invalid request path"
+            ));
+        }
         String method = request.getMethod();
 
-        if (path.equals("/error")) {
+        if (safePath.equals("/error")) {
             return ResponseEntity.ok().build();
         }
 
-        String targetUrl = resolveTarget(path, method);
+        String targetUrl = resolveTarget(safePath, method);
         if (targetUrl == null) {
             return ResponseEntity.notFound().build();
         }
@@ -52,7 +61,7 @@ public class ProxyService {
             String bodyStr = reqBody.length > 0 ? new String(reqBody, StandardCharsets.UTF_8) : null;
             var entity = new HttpEntity<>(bodyStr, headers);
 
-            URI uri = URI.create(targetUrl + path);
+            URI uri = URI.create(targetUrl + safePath);
             HttpMethod httpMethod = HttpMethod.valueOf(method);
 
             return restTemplate.execute(uri, httpMethod, req -> {
@@ -79,6 +88,20 @@ public class ProxyService {
                     "error", "Upstream error: " + e.getClass().getSimpleName() + " - " + e.getMessage()
             ));
         }
+    }
+
+    private String sanitizeForwardPath(String path) {
+        if (path == null || path.isBlank() || !path.startsWith("/")) {
+            return null;
+        }
+        String lower = path.toLowerCase(Locale.ROOT);
+        if (path.contains("..") || lower.contains("%2e") || path.contains("\\") || path.contains("\0")) {
+            return null;
+        }
+        if (!SAFE_PATH_PATTERN.matcher(path).matches()) {
+            return null;
+        }
+        return path;
     }
 
     private HttpHeaders filterHopByHopHeaders(HttpHeaders headers) {
