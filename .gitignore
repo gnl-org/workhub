@@ -7,8 +7,8 @@ redis_data/
 # Environment files
 .env
 .env.local
-infra/.env.docker
-infra/.env.docker.local
+.env.dev
+.env.prod
 
 # Performance test artifacts
 reports/

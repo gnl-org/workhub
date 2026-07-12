@@ -1,4 +1,49 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: projecthub-db
+    environment:
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    env_file: .env
+
+  postgres-notifications:
+    image: postgres:16-alpine
+    container_name: projecthub-notifications-db
+    environment:
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_NOTIFICATIONS}
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./postgres_notifications_data:/var/lib/postgresql/data
+    env_file: .env
+
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: projecthub-auth-db
+    environment:
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB_AUTH}
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./postgres_auth_data:/var/lib/postgresql/data
+    env_file: .env
+
+  redis:
+    image: redis:7-alpine
+    container_name: projecthub-cache
+    ports:
+      - "6379:6379"
+
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: projecthub-mq
@@ -14,7 +59,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx256m
       - APP_JWT_SECRET=${APP_JWT_SECRET}
     depends_on:
       - workhub-core
@@ -27,7 +71,6 @@ services:
     ports:
       - "8081:8081"
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx256m
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
@@ -38,7 +81,9 @@ services:
     volumes:
       - ./core-uploads:/app/uploads
     depends_on:
+      - postgres
       - rabbitmq
+      - redis
     env_file: .env
 
   workhub-auth:
@@ -46,7 +91,6 @@ services:
     ports:
       - "8082:8082"
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx256m
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_AUTH}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
@@ -56,6 +100,7 @@ services:
       - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
     depends_on:
+      - postgres-auth
       - rabbitmq
     env_file: .env
 
@@ -64,7 +109,6 @@ services:
     ports:
       - "8083:8083"
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx256m
       - SPRING_PROFILES_ACTIVE=prod
       - SPRING_DATASOURCE_URL_NOTIFICATIONS=${SPRING_DATASOURCE_URL_NOTIFICATIONS}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
@@ -72,5 +116,6 @@ services:
       - SPRING_RABBITMQ_USERNAME=${RABBITMQ_DEFAULT_USER}
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_DEFAULT_PASS}
     depends_on:
+      - postgres-notifications
       - rabbitmq
     env_file: .env
