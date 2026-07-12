@@ -1,8 +1,8 @@
-package com.gnl.workhub.coreservice;
+package com.gnl.workhub.authservice;
 
 import org.junit.jupiter.api.Test;
 
-class CoreServiceApplicationTests {
+class AuthServiceApplicationTests {
     @Test
     void contextLoads() {
         assert true;

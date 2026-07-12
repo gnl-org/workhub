@@ -1,8 +1,8 @@
-package com.gnl.workhub.coreservice;
+package com.gnl.workhub.gatewayservice;
 
 import org.junit.jupiter.api.Test;
 
-class CoreServiceApplicationTests {
+class GatewayServiceApplicationTests {
     @Test
     void contextLoads() {
         assert true;

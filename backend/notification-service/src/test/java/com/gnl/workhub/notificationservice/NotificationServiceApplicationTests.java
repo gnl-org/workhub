@@ -1,8 +1,8 @@
-package com.gnl.workhub.coreservice;
+package com.gnl.workhub.notificationservice;
 
 import org.junit.jupiter.api.Test;
 
-class CoreServiceApplicationTests {
+class NotificationServiceApplicationTests {
     @Test
     void contextLoads() {
         assert true;
