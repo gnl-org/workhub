@@ -1,0 +1,53 @@
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options:
+          - staging
+          - prod
+
+env:
+  AWS_REGION: ap-south-2
+  ECR_REGISTRY: 258227418027.dkr.ecr.ap-south-2.amazonaws.com
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Resolve image tag
+        id: sha
+        run: echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::258227418027:role/workhub_ecr
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Tag images for ${{ inputs.environment }} (${{ steps.sha.outputs.sha }})
+        run: |
+          for service in workhub-backend workhub-gateway workhub-auth workhub-notifications; do
+            MANIFEST=$(aws ecr batch-get-image \
+              --repository-name $service \
+              --image-ids imageTag=${{ steps.sha.outputs.sha }} \
+              --query 'images[0].imageManifest' \
+              --output text)
+            aws ecr put-image \
+              --repository-name $service \
+              --image-tag ${{ inputs.environment }} \
+              --image-manifest "$MANIFEST"
+          done
+
+      # TODO: Add deployment step based on target infrastructure
+      # - SSH into server + docker-compose pull + restart
+      # - Update ECS task definition + force deploy
+      # - Update Kubernetes manifest
