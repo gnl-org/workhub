@@ -26,6 +26,20 @@ jobs:
         working-directory: backend/${{ matrix.service }}
         run: mvn test
 
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: java
+      - uses: github/codeql-action/autobuild@v3
+      - uses: github/codeql-action/analyze@v3
+
   build-and-push:
     needs: test
     permissions:
@@ -69,11 +83,22 @@ jobs:
           aws ecr describe-repositories --repository-names ${{ matrix.ecr_repo }} 2>/dev/null ||
           aws ecr create-repository --repository-name ${{ matrix.ecr_repo }}
 
-      - name: Build and push to ECR
+      - name: Build Docker image
         uses: docker/build-push-action@v7
         with:
           context: backend/${{ matrix.service }}
-          push: true
+          load: true
           tags: |
             ${{ env.ECR_REGISTRY }}/${{ matrix.ecr_repo }}:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/${{ matrix.ecr_repo }}:latest
+
+      - name: Run Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.ECR_REGISTRY }}/${{ matrix.ecr_repo }}:${{ github.sha }}
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+
+      - name: Push to ECR
+        run: docker push --all-tags ${{ env.ECR_REGISTRY }}/${{ matrix.ecr_repo }}
