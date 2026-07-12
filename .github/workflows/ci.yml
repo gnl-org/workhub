@@ -34,11 +34,16 @@ jobs:
       security-events: write
     steps:
       - uses: actions/checkout@v5
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with:
           languages: java
-      - uses: github/codeql-action/autobuild@v3
-      - uses: github/codeql-action/analyze@v3
+      - name: Build for CodeQL analysis
+        run: |
+          cd backend/core-service && mvn clean compile -DskipTests -q
+          cd ../gateway-service && mvn clean compile -DskipTests -q
+          cd ../auth-service && mvn clean compile -DskipTests -q
+          cd ../notification-service && mvn clean compile -DskipTests -q
+      - uses: github/codeql-action/analyze@v4
 
   build-and-push:
     needs: test
