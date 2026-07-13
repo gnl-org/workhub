@@ -47,7 +47,12 @@ jobs:
               --image-manifest "$MANIFEST"
           done
 
-      # TODO: Add deployment step based on target infrastructure
-      # - SSH into server + docker-compose pull + restart
-      # - Update ECS task definition + force deploy
-      # - Update Kubernetes manifest
+      # NOTE: This workflow only retags ECR images for the target environment.
+# Actual deployment is done manually via infra/deploy.sh (see ADR-007).
+# To add CI-based deployment: store EC2_HOST + EC2_SSH_KEY as GitHub secrets,
+# then uncomment and implement the SSH step below.
+#
+# Steps to add:
+# - SSH into server + docker-compose pull + restart
+# - Update ECS task definition + force deploy
+# - Update Kubernetes manifest
