@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '',
+  baseURL: import.meta.env.VITE_API_URL || '',
   withCredentials: true, // Tells Axios to include the HttpOnly cookie automatically
   withXSRFToken: true,
   // Axios will automatically read this cookie name...

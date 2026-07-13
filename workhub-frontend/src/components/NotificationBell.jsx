@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, Check, CheckCheck } from 'lucide-react';
-import notificationApi from '../api/notificationsApi';
+import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 
 export default function NotificationBell() {
@@ -13,8 +13,8 @@ export default function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     try {
       const [listRes, countRes] = await Promise.all([
-        notificationApi.get('/api/v1/notifications'),
-        notificationApi.get('/api/v1/notifications/unread-count'),
+        api.get('/api/v1/notifications'),
+        api.get('/api/v1/notifications/unread-count'),
       ]);
       setNotifications(listRes.data);
       setUnreadCount(countRes.data.count);
@@ -48,7 +48,7 @@ export default function NotificationBell() {
 
   const markAsRead = async (id) => {
     try {
-      await notificationApi.patch(`/api/v1/notifications/${id}/read`);
+      await api.patch(`/api/v1/notifications/${id}/read`);
       setNotifications(prev =>
         prev.map(n => n.id === id ? { ...n, isRead: true } : n)
       );
@@ -60,7 +60,7 @@ export default function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      await notificationApi.patch('/api/v1/notifications/read-all');
+      await api.patch('/api/v1/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (e) {
