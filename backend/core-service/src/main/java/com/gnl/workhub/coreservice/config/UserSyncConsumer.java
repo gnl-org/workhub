@@ -1,8 +1,7 @@
 package com.gnl.workhub.coreservice.config;
 
-import com.gnl.workhub.coreservice.entity.User;
-import com.gnl.workhub.coreservice.enums.UserRole;
 import com.gnl.workhub.coreservice.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
@@ -10,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static com.gnl.workhub.coreservice.config.UserSyncRabbitConfig.USER_QUEUE;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -17,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserSyncConsumer {
 
+    private final EntityManager entityManager;
     private final UserRepository userRepository;
 
     @Transactional
@@ -27,14 +28,16 @@ public class UserSyncConsumer {
         String fullName = (String) message.get("fullName");
         String role = (String) message.get("role");
 
-        if (userRepository.findById(UUID.fromString(id)).isPresent()) return;
+        UUID userId = UUID.fromString(id);
+        if (userRepository.existsById(userId)) return;
 
-        var user = User.builder()
-                .email(email)
-                .fullName(fullName)
-                .globalRole(UserRole.valueOf(role))
-                .build();
-        user.setId(UUID.fromString(id));
-        userRepository.save(user);
+        entityManager.createNativeQuery(
+                "INSERT INTO users (id, email, full_name, global_role, created_at, updated_at, is_deleted) " +
+                "VALUES (?, ?, ?, ?, NOW(), NOW(), false)")
+                .setParameter(1, userId)
+                .setParameter(2, email)
+                .setParameter(3, fullName)
+                .setParameter(4, role)
+                .executeUpdate();
     }
 }
