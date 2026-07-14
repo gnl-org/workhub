@@ -3,13 +3,10 @@ package com.gnl.workhub.coreservice;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cache.annotation.EnableCaching;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 @SpringBootApplication
-@EnableCaching
 public class CoreServiceApplication {
 
 	public static void main(String[] args) {
