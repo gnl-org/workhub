@@ -27,7 +27,7 @@ services:
     env_file: .env
 
   workhub-core:
-    image: 258227418027.dkr.ecr.ap-south-2.amazonaws.com/workhub-backend
+    image: 258227418027.dkr.ecr.ap-south-2.amazonaws.com/workhub-core
     ports:
       - "8081:8081"
     environment:

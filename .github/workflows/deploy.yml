@@ -35,7 +35,7 @@ jobs:
 
       - name: Tag images for ${{ inputs.environment }} (${{ steps.sha.outputs.sha }})
         run: |
-          for service in workhub-backend workhub-gateway workhub-auth workhub-notifications; do
+          for service in workhub-core workhub-gateway workhub-auth workhub-notifications; do
             MANIFEST=$(aws ecr batch-get-image \
               --repository-name $service \
               --image-ids imageTag=${{ steps.sha.outputs.sha }} \

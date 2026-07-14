@@ -58,7 +58,7 @@ jobs:
       matrix:
         include:
           - service: core-service
-            ecr_repo: workhub-backend
+            ecr_repo: workhub-core
           - service: gateway-service
             ecr_repo: workhub-gateway
           - service: auth-service
