@@ -3,7 +3,6 @@ package com.gnl.workhub.coreservice.config;
 import com.gnl.workhub.coreservice.entity.User;
 import com.gnl.workhub.coreservice.enums.UserRole;
 import com.gnl.workhub.coreservice.repository.UserRepository;
-import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ import java.util.UUID;
 public class UserSyncConsumer {
 
     private final UserRepository userRepository;
-    private final EntityManager entityManager;
 
     @Transactional
     @RabbitListener(queues = USER_QUEUE)
@@ -37,6 +35,6 @@ public class UserSyncConsumer {
                 .globalRole(UserRole.valueOf(role))
                 .build();
         user.setId(UUID.fromString(id));
-        entityManager.persist(user);
+        userRepository.save(user);
     }
 }
