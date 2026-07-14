@@ -32,8 +32,8 @@ public class UserSyncConsumer {
         if (userRepository.existsById(userId)) return;
 
         entityManager.createNativeQuery(
-                "INSERT INTO users (id, email, full_name, global_role, created_at, updated_at, is_deleted) " +
-                "VALUES (?, ?, ?, ?, NOW(), NOW(), false)")
+                "INSERT INTO users (id, email, password_hash, full_name, global_role, created_at, updated_at, is_deleted) " +
+                "VALUES (?, ?, '', ?, ?, NOW(), NOW(), false)")
                 .setParameter(1, userId)
                 .setParameter(2, email)
                 .setParameter(3, fullName)
