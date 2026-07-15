@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,26 +27,37 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final WorkStageService workStageService;
     private final WorkStageRepository workStageRepository;
     private final SprintRepository sprintRepository;
-    private final PasswordEncoder passwordEncoder;
     private final Faker faker = new Faker();
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (userRepository.count() > 0) return;
+        if (projectRepository.count() > 0) {
+            System.out.println("Projects already exist, skipping seed.");
+            return;
+        }
 
         System.out.println("🌱 Seeding started...");
 
-        // 1. Create Admins
-        List<User> admins = new ArrayList<>();
-        for (int i = 1; i <= 3; i++) {
-            admins.add(createUser("admin" + i + "@workhub.com", UserRole.ADMIN));
+        // Use users already synced from auth via RabbitMQ
+        List<User> allUsers = userRepository.findAll();
+        if (allUsers.size() < 3) {
+            System.out.println("❌ Need at least 3 users in core DB. Run auth seeder first.");
+            return;
         }
 
-        // 2. Create 50 Users
-        List<User> users = new ArrayList<>();
-        for (int i = 1; i <= 50; i++) {
-            users.add(createUser(faker.internet().emailAddress(), UserRole.USER));
+        List<User> admins = allUsers.stream()
+                .filter(u -> u.getGlobalRole() == UserRole.ADMIN)
+                .toList();
+        if (admins.isEmpty()) {
+            admins = allUsers.subList(0, Math.min(3, allUsers.size()));
+        }
+
+        List<User> users = allUsers.stream()
+                .filter(u -> u.getGlobalRole() == UserRole.USER)
+                .toList();
+        if (users.isEmpty()) {
+            users = allUsers;
         }
 
         // 3. Create 6 Projects & Assign Members
@@ -149,12 +159,4 @@ public class DatabaseSeeder implements CommandLineRunner {
         System.out.println("✅ Successfully seeded 300 tasks with valid memberships!");
     }
 
-    private User createUser(String email, UserRole role) {
-        return userRepository.save(User.builder()
-                .fullName(faker.name().firstName())
-                .email(email)
-                .passwordHash(passwordEncoder.encode("password123"))
-                .globalRole(role)
-                .build());
-    }
 }
