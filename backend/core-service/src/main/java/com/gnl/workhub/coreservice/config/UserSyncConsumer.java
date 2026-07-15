@@ -33,7 +33,8 @@ public class UserSyncConsumer {
 
         entityManager.createNativeQuery(
                 "INSERT INTO users (id, email, password_hash, full_name, global_role, created_at, updated_at, is_deleted) " +
-                "VALUES (?, ?, '', ?, ?, NOW(), NOW(), false)")
+                "VALUES (?, ?, '', ?, ?, NOW(), NOW(), false) " +
+                "ON CONFLICT (email) DO NOTHING")
                 .setParameter(1, userId)
                 .setParameter(2, email)
                 .setParameter(3, fullName)
