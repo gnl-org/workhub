@@ -15,6 +15,7 @@ services:
       - "8080:8080"
     environment:
       - JAVA_TOOL_OPTIONS=-Xmx256m
+      - SPRING_PROFILES_ACTIVE=prod
       - APP_JWT_SECRET=${APP_JWT_SECRET}
       - APP_SERVICE_AUTH_URL=http://workhub-auth:8082
       - APP_SERVICE_NOTIFICATIONS_URL=http://workhub-notifications:8083

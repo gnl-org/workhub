@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // TODO: Replace .permitAll() with service-to-service auth (e.g., GatewayTokenFilter) so /ws is not open to all
                         .requestMatchers("/ws").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
                         .anyRequest().authenticated()
                 );
 

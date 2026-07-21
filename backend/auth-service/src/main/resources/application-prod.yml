@@ -1,0 +1,15 @@
+# ==========================================
+# Actuator (Production Restriction)
+# ==========================================
+# SECURITY: In production, only expose health checks.
+# Do NOT expose /actuator/prometheus or /actuator/metrics publicly —
+# they leak JVM internals, request rates, and memory details.
+# For Prometheus scraping, use network-level security (Docker network, VPC, or IP whitelist).
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: always
