@@ -23,6 +23,7 @@ Refer .env.example and env.docker.example to understand required variables
 Ensure you are in the /infra directory, then launch the PostgreSQL container:
 ```bash
 docker-compose --env-file .env.docker up -d postgres
+docker-compose -f docker-compose.dev.yml --env-file .env.dev up -d postgres
 ```
 check connection and stop container
 ```bash
