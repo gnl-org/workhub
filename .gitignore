@@ -21,3 +21,9 @@ uploads/
 
 # opencode personal instructions
 .opencode/instructions.md
+
+# macOS
+.DS_Store
+
+# IntelliJ IDEA
+.idea/
